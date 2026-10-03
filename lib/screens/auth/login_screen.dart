@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../app_mode.dart';
 import '../../repositories/mock/mock_backend.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_wordmark.dart';
@@ -97,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              const _DemoAccounts(),
+              if (context.read<AppMode>().isMock) const _DemoAccounts(),
               const SizedBox(height: 8),
             ],
           ),

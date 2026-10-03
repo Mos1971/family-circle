@@ -40,7 +40,7 @@ class AuthProvider extends ChangeNotifier {
       );
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = e.toString().replaceFirst('Exception: ', '');
       notifyListeners();
       return false;
     }
@@ -52,7 +52,7 @@ class AuthProvider extends ChangeNotifier {
       await _repo.login(email: email, password: password);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = e.toString().replaceFirst('Exception: ', '');
       notifyListeners();
       return false;
     }

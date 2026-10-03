@@ -1,0 +1,167 @@
+rules_version = '2';
+
+// Family Circle security rules.
+//
+// Principles:
+//  * Nobody can do anything unless signed in.
+//  * A person who has just registered is "pending": they can see and edit only
+//    their own profile until an admin approves them.
+//  * Private data (messages, private events, lists, notifications) is only
+//    readable by the people it belongs to.
+//  * Only admins can approve/remove members, change roles, post announcements
+//    and see reports.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers ---------------------------------------------------------
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function myDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isApproved() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && myDoc().data.status == 'approved';
+    }
+
+    function isAdmin() {
+      return isApproved() && myDoc().data.role == 'admin';
+    }
+
+    function isApprovedUser(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid))
+        && get(/databases/$(database)/documents/users/$(uid)).data.status == 'approved';
+    }
+
+    // ---- users -----------------------------------------------------------
+    match /users/{userId} {
+      // Approved members can see everyone (names for the feed/directory);
+      // pending members can only see themselves.
+      allow read: if signedIn() && (request.auth.uid == userId || isApproved());
+
+      // You can only create your own profile, and only as a pending member.
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.status == 'pending'
+        && request.resource.data.role == 'member'
+        && request.resource.data.keys().hasOnly([
+             'firstName', 'familyName', 'email', 'bio', 'role', 'status',
+             'joinDate', 'postCount', 'profileEmoji', 'prefs'
+           ]);
+
+      allow update: if
+        // Members can edit their own harmless fields.
+        (signedIn() && request.auth.uid == userId
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['bio', 'prefs', 'postCount', 'profileEmoji']))
+        // Admins can approve/remove members and change roles.
+        || (isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['status', 'role']));
+
+      allow delete: if false;
+    }
+
+    // ---- feed ------------------------------------------------------------
+    match /posts/{postId} {
+      allow read: if isApproved();
+      // Normal posts are authored by the poster; admins also create the
+      // automatic "welcome" post on behalf of a newly approved member.
+      allow create: if isApproved()
+        && ((request.resource.data.authorId == request.auth.uid)
+            || (isAdmin() && request.resource.data.type == 'welcome'));
+      // Reactions / report counter / hidden flag only.
+      allow update: if isApproved()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['reactions', 'reportedCount', 'hidden']);
+      allow delete: if isApproved()
+        && (resource.data.authorId == request.auth.uid || isAdmin());
+    }
+
+    match /comments/{commentId} {
+      allow read: if isApproved();
+      allow create: if isApproved() && request.resource.data.authorId == request.auth.uid;
+      allow delete: if isApproved()
+        && (resource.data.authorId == request.auth.uid || isAdmin());
+      allow update: if false;
+    }
+
+    match /reports/{reportId} {
+      allow create: if isApproved() && request.resource.data.reporterId == request.auth.uid;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ---- announcements ---------------------------------------------------
+    match /announcements/{id} {
+      allow read: if isApproved();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ---- notifications ---------------------------------------------------
+    // Anyone approved can send a notification to someone (e.g. "X sent you a
+    // message"); only the recipient can read or change it.
+    match /notifications/{id} {
+      allow read, delete: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isApproved();
+      allow update: if signedIn() && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+    }
+
+    // ---- private messages -----------------------------------------------
+    // Only the two participants can ever read a message.
+    match /messages/{id} {
+      allow read: if signedIn() && request.auth.uid in resource.data.participants;
+      allow create: if isApproved()
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.participants.size() == 2
+        && request.resource.data.participants.hasAll(
+             [request.resource.data.senderId, request.resource.data.recipientId])
+        && request.resource.data.senderId != request.resource.data.recipientId
+        && isApprovedUser(request.resource.data.recipientId);
+      // The recipient can mark a message as read; nothing else is editable.
+      allow update: if signedIn()
+        && resource.data.recipientId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if false;
+    }
+
+    // ---- calendar --------------------------------------------------------
+    match /events/{id} {
+      // Family events are visible to every member; private ones to the owner.
+      allow read: if (isApproved() && resource.data.shared == true)
+        || (signedIn() && resource.data.ownerId == request.auth.uid);
+      allow create: if isApproved() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isApproved() && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if isApproved()
+        && (resource.data.ownerId == request.auth.uid
+            || (resource.data.shared == true && isAdmin()));
+    }
+
+    // ---- to-do lists -----------------------------------------------------
+    // 'members' = owner + the people the list is shared with.
+    match /todoLists/{id} {
+      allow read: if signedIn() && request.auth.uid in resource.data.members;
+      allow create: if isApproved()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.auth.uid in request.resource.data.members;
+      // Any member can tick/add items; only the owner can change sharing.
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.members
+        && request.resource.data.ownerId == resource.data.ownerId
+        && (resource.data.ownerId == request.auth.uid
+            || (request.resource.data.sharedWith == resource.data.sharedWith
+                && request.resource.data.members == resource.data.members));
+      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Everything else is locked.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
