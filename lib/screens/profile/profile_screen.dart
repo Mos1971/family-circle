@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/circle_switcher.dart';
 import '../../widgets/member_avatar.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -106,6 +107,8 @@ class ProfileScreen extends StatelessWidget {
             icon: const Icon(Icons.edit_outlined),
             label: const Text('Edit profile'),
           ),
+          const SizedBox(height: 16),
+          const CircleSwitcher(),
           const SizedBox(height: 16),
           Card(
             child: Column(

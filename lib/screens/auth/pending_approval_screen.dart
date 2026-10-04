@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_wordmark.dart';
+import '../../widgets/circle_switcher.dart';
 import '../../widgets/auth_frame.dart';
 
 class PendingApprovalScreen extends StatelessWidget {
@@ -48,7 +49,12 @@ class PendingApprovalScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.muted, height: 1.5),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: CircleSwitcher(),
+                ),
+                const SizedBox(height: 20),
                 OutlinedButton(
                   onPressed: () => context.read<AuthProvider>().logout(),
                   child: const Text('Log out'),

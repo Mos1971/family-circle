@@ -29,7 +29,6 @@ T _enum<T extends Enum>(List<T> values, dynamic name, T fallback) {
 Map<String, dynamic> userToMap(AppUser u) => {
   'firstName': u.firstName,
   'familyName': u.familyName,
-  'circleId': u.circleId,
   'email': u.email,
   'bio': u.bio,
   'role': u.role.name,
@@ -40,13 +39,16 @@ Map<String, dynamic> userToMap(AppUser u) => {
   'prefs': prefsToMap(NotificationPrefs()),
 };
 
-AppUser userFromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
+AppUser userFromDoc(
+  DocumentSnapshot<Map<String, dynamic>> d, {
+  required String circleId,
+}) {
   final m = d.data()!;
   return AppUser(
     id: d.id,
     firstName: m['firstName'] ?? '',
     familyName: m['familyName'] ?? '',
-    circleId: m['circleId'] ?? '',
+    circleId: circleId,
     email: m['email'] ?? '',
     bio: m['bio'] ?? '',
     role: _enum(MemberRole.values, m['role'], MemberRole.member),

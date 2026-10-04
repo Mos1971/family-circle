@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/announcements/announcement_detail_screen.dart';
 import '../screens/announcements/announcements_list_screen.dart';
+import '../screens/auth/add_circle_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/pending_approval_screen.dart';
 import '../screens/auth/register_screen.dart';
@@ -36,6 +37,10 @@ class AppRouter {
         GoRoute(
           path: '/pending',
           builder: (c, s) => const PendingApprovalScreen(),
+        ),
+        GoRoute(
+          path: '/circles/add',
+          builder: (c, s) => const AddCircleScreen(),
         ),
         ShellRoute(
           builder: (context, state, child) =>
@@ -158,7 +163,7 @@ class AppRouter {
 
     // Pending and removed/rejected members are held on the waiting screen.
     if (!_auth.isApproved) {
-      return loc == '/pending' ? null : '/pending';
+      return (loc == '/pending' || loc == '/circles/add') ? null : '/pending';
     }
 
     if (authScreens.contains(loc) || loc == '/pending') {

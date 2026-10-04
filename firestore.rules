@@ -3,8 +3,9 @@ rules_version = '2';
 // Family Circle security rules (multi-tenant).
 //
 // Every customer gets their own "circle". All of a circle's data lives under
-// /circles/{circleId}/..., and a person can only touch the circle named on
-// their own profile (/users/{uid}.circleId) — and only once approved.
+// /circles/{circleId}/..., and a person can only touch circles where they have
+// an approved profile (/circles/{circleId}/members/{uid}). One sign-in can
+// belong to many circles.
 //
 // Principles:
 //  * Nobody can do anything unless signed in (except checking an invite or
@@ -23,31 +24,25 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function userPath(uid) {
-      return /databases/$(database)/documents/users/$(uid);
-    }
-
-    function hasProfile() {
-      return signedIn() && exists(userPath(request.auth.uid));
-    }
-
-    function me() {
-      return get(userPath(request.auth.uid)).data;
+    function memberPath(cid, uid) {
+      return /databases/$(database)/documents/circles/$(cid)/members/$(uid);
     }
 
     // Approved member of this specific circle.
     function inCircle(cid) {
-      return hasProfile() && me().status == 'approved' && me().circleId == cid;
+      return signedIn()
+        && exists(memberPath(cid, request.auth.uid))
+        && get(memberPath(cid, request.auth.uid)).data.status == 'approved';
     }
 
     function adminOf(cid) {
-      return inCircle(cid) && me().role == 'admin';
+      return inCircle(cid)
+        && get(memberPath(cid, request.auth.uid)).data.role == 'admin';
     }
 
     function approvedInCircle(uid, cid) {
-      return exists(userPath(uid))
-        && get(userPath(uid)).data.status == 'approved'
-        && get(userPath(uid)).data.circleId == cid;
+      return exists(memberPath(cid, uid))
+        && get(memberPath(cid, uid)).data.status == 'approved';
     }
 
     // ---- licence codes (issued by the app owner) -------------------------
@@ -76,55 +71,24 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ---- users -----------------------------------------------------------
+    // ---- accounts --------------------------------------------------------
+    // One document per sign-in: which circles you belong to and which is
+    // active. Only you can see or change it.
     match /users/{userId} {
-      // See yourself, or fellow approved members of your own circle.
-      allow read: if signedIn() && (
-        request.auth.uid == userId
-        || (hasProfile() && me().status == 'approved'
-            && resource.data.circleId == me().circleId)
-      );
-
-      allow create: if signedIn()
-        && request.auth.uid == userId
-        && request.resource.data.keys().hasOnly([
-             'firstName', 'familyName', 'circleId', 'email', 'bio', 'role',
-             'status', 'joinDate', 'postCount', 'profileEmoji', 'prefs'
-           ])
-        && request.resource.data.circleId is string
-        && request.resource.data.circleId.size() > 0
-        && (
-          // Joining an existing circle: always pending, always a member.
-          (request.resource.data.status == 'pending'
-            && request.resource.data.role == 'member'
-            && exists(/databases/$(database)/documents/circles/$(request.resource.data.circleId)))
-          ||
-          // Founding a brand-new circle: admin of a circle created in the
-          // same batch (the circle did not exist before).
-          (request.resource.data.status == 'approved'
-            && request.resource.data.role == 'admin'
-            && !exists(/databases/$(database)/documents/circles/$(request.resource.data.circleId))
-            && getAfter(/databases/$(database)/documents/circles/$(request.resource.data.circleId)).data.ownerId == request.auth.uid)
-        );
-
-      allow update: if
-        // Members can edit their own harmless fields.
-        (signedIn() && request.auth.uid == userId
-          && request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['bio', 'prefs', 'postCount', 'profileEmoji']))
-        // Admins can approve/remove members and change roles — only inside
-        // their own circle.
-        || (adminOf(resource.data.circleId)
-          && request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['status', 'role']));
-
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn() && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(
+             ['email', 'activeCircleId', 'circleIds', 'circleNames']);
+      allow update: if signedIn() && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+             ['email', 'activeCircleId', 'circleIds', 'circleNames']);
       allow delete: if false;
     }
 
     // ---- circles ---------------------------------------------------------
     match /circles/{cid} {
       // Anyone with a profile in the circle (even pending) can see its name.
-      allow get: if hasProfile() && me().circleId == cid;
+      allow get: if signedIn() && exists(memberPath(cid, request.auth.uid));
       allow list: if false;
 
       // Creating a circle burns a valid, unused licence in the same batch.
@@ -138,6 +102,46 @@ service cloud.firestore {
       allow update: if adminOf(cid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']);
       allow delete: if false;
+
+      // ---- members: a person's profile inside this circle -------------------
+      match /members/{memberId} {
+        // Approved members see everyone in the circle; anyone can see their
+        // own profile (so a pending member can see their status).
+        allow read: if inCircle(cid) || (signedIn() && request.auth.uid == memberId);
+
+        allow create: if signedIn()
+          && request.auth.uid == memberId
+          && !exists(memberPath(cid, memberId))
+          && request.resource.data.keys().hasOnly([
+               'firstName', 'familyName', 'email', 'bio', 'role', 'status',
+               'joinDate', 'postCount', 'profileEmoji', 'prefs'
+             ])
+          && (
+            // Joining an existing circle: always pending, always a member.
+            (request.resource.data.status == 'pending'
+              && request.resource.data.role == 'member'
+              && exists(/databases/$(database)/documents/circles/$(cid)))
+            ||
+            // Founding a brand-new circle: admin of a circle created in the
+            // same batch (it did not exist before).
+            (request.resource.data.status == 'approved'
+              && request.resource.data.role == 'admin'
+              && !exists(/databases/$(database)/documents/circles/$(cid))
+              && getAfter(/databases/$(database)/documents/circles/$(cid)).data.ownerId == request.auth.uid)
+          );
+
+        allow update:
+          // Members can edit their own harmless fields.
+          if (signedIn() && request.auth.uid == memberId
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['bio', 'prefs', 'postCount', 'profileEmoji']))
+          // Admins can approve/remove members and change roles.
+          || (adminOf(cid)
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['status', 'role']));
+
+        allow delete: if false;
+      }
 
       // ---- feed ----------------------------------------------------------
       match /posts/{postId} {

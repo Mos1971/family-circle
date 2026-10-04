@@ -16,3 +16,10 @@ class Circle {
   final String code;
   final String ownerId;
 }
+
+/// A circle the signed-in person belongs to (for the circle switcher).
+class CircleRef {
+  const CircleRef({required this.id, required this.name});
+  final String id;
+  final String name;
+}

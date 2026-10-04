@@ -12,6 +12,22 @@ class UserProvider extends ChangeNotifier {
   final UserRepository _repo;
 
   Circle? get circle => _repo.circle;
+  List<CircleRef> get myCircles => _repo.myCircles;
+  void switchCircle(String id) => _repo.switchCircle(id);
+
+  Future<void> addCircle({
+    required String firstName,
+    required String familyName,
+    String? inviteCode,
+    String? licenseCode,
+    String? circleName,
+  }) => _repo.addCircle(
+    firstName: firstName,
+    familyName: familyName,
+    inviteCode: inviteCode,
+    licenseCode: licenseCode,
+    circleName: circleName,
+  );
 
   List<AppUser> getAll() => _repo.getAll();
   AppUser? getById(String id) => _repo.getById(id);

@@ -120,10 +120,40 @@ class FirebaseUserRepository implements UserRepository {
   FirebaseUserRepository(this._b);
   final FirebaseBackend _b;
 
-  DocumentReference<Json> _doc(String id) => _b.db.collection('users').doc(id);
+  DocumentReference<Json> _doc(String id) => _b.col('members').doc(id);
 
   @override
   Circle? get circle => _b.circle;
+
+  @override
+  List<CircleRef> get myCircles => _b.myCircles;
+
+  @override
+  void switchCircle(String circleId) =>
+      _write(_b.switchCircle(circleId), 'switch circle');
+
+  @override
+  Future<void> addCircle({
+    required String firstName,
+    required String familyName,
+    String? inviteCode,
+    String? licenseCode,
+    String? circleName,
+  }) async {
+    try {
+      await _b.addCircle(
+        firstName: firstName,
+        familyName: familyName,
+        inviteCode: inviteCode,
+        licenseCode: licenseCode,
+        circleName: circleName,
+      );
+    } on FirebaseException {
+      throw Exception(
+        'We couldn\x27t complete that. Please check your code and try again.',
+      );
+    }
+  }
 
   @override
   List<AppUser> getAll() => List.unmodifiable(_b.users);
@@ -246,7 +276,7 @@ class FirebaseFeedRepository implements FeedRepository {
     );
     _write(ref.set(postToMap(post)), 'create post');
     _write(
-      _b.db.collection('users').doc(authorId).update({
+      _b.col('members').doc(authorId).update({
         'postCount': FieldValue.increment(1),
       }),
       'post count',
@@ -537,9 +567,7 @@ class FirebaseNotificationPrefsRepository
     mutate(prefs);
     _b.notificationChanges.add(null);
     _write(
-      _b.db.collection('users').doc(userId).update({
-        'prefs': prefsToMap(prefs),
-      }),
+      _b.col('members').doc(userId).update({'prefs': prefsToMap(prefs)}),
       'prefs',
     );
   }

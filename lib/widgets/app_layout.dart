@@ -130,16 +130,8 @@ class _Sidebar extends StatelessWidget {
               children: [
                 const AppWordmark(fontSize: 30),
                 if (context.watch<UserProvider>().circle != null) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    context.watch<UserProvider>().circle!.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 12,
-                    ),
-                  ),
+                  const SizedBox(height: 6),
+                  _CircleMenu(),
                 ],
               ],
             ),
@@ -283,6 +275,62 @@ class _SidebarTile extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Circle name in the sidebar; opens a menu to switch circles.
+class _CircleMenu extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final users = context.watch<UserProvider>();
+    final active = users.circle;
+    return PopupMenuButton<String>(
+      tooltip: 'Switch circle',
+      position: PopupMenuPosition.under,
+      onSelected: (v) {
+        if (v == '__add__') {
+          context.push('/circles/add');
+        } else {
+          users.switchCircle(v);
+        }
+      },
+      itemBuilder: (_) => [
+        for (final c in users.myCircles)
+          PopupMenuItem(
+            value: c.id,
+            child: Row(
+              children: [
+                Icon(
+                  c.id == active?.id ? Icons.check : null,
+                  size: 18,
+                  color: AppColors.gold,
+                ),
+                const SizedBox(width: 8),
+                Flexible(child: Text(c.name, overflow: TextOverflow.ellipsis)),
+              ],
+            ),
+          ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: '__add__',
+          child: Text('Join or start another circle'),
+        ),
+      ],
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              active?.name ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: AppColors.muted, fontSize: 12),
+            ),
+          ),
+          const Icon(Icons.unfold_more, size: 16, color: AppColors.muted),
+        ],
       ),
     );
   }

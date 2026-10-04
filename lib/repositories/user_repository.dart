@@ -5,6 +5,19 @@ abstract class UserRepository {
   /// The signed-in member's circle (name + invite code), once loaded.
   Circle? get circle;
 
+  /// Every circle this person belongs to, and switching between them.
+  List<CircleRef> get myCircles;
+  void switchCircle(String circleId);
+
+  /// Join (invite code) or start (licence code) another circle.
+  Future<void> addCircle({
+    required String firstName,
+    required String familyName,
+    String? inviteCode,
+    String? licenseCode,
+    String? circleName,
+  });
+
   List<AppUser> getAll();
   AppUser? getById(String id);
   List<AppUser> getPendingApproval();

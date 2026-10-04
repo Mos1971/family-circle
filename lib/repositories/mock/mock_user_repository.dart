@@ -10,6 +10,23 @@ class MockUserRepository implements UserRepository {
   final MockBackend _backend;
 
   @override
+  List<CircleRef> get myCircles => const [
+    CircleRef(id: 'mock', name: 'Family Circle'),
+  ];
+
+  @override
+  void switchCircle(String circleId) {}
+
+  @override
+  Future<void> addCircle({
+    required String firstName,
+    required String familyName,
+    String? inviteCode,
+    String? licenseCode,
+    String? circleName,
+  }) async => throw UnsupportedError('Not available in demo mode.');
+
+  @override
   Circle? get circle => const Circle(
     id: 'mock',
     name: 'Family Circle',
