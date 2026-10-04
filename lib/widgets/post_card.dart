@@ -60,7 +60,7 @@ class PostCard extends StatelessWidget {
                     icon: const Icon(Icons.more_horiz, color: AppColors.muted),
                     onSelected: (v) {
                       if (v == 'delete') {
-                        feed.deletePost(post.id, post.authorId);
+                        feed.deletePost(post.id, me.id);
                       } else if (v == 'report') {
                         feed.reportPost(post.id, me.id);
                         ScaffoldMessenger.of(context).showSnackBar(

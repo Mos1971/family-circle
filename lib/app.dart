@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'app_messenger.dart';
 import 'app_mode.dart';
 import 'firebase/firebase_backend.dart';
 import 'firebase/firebase_repositories.dart';
 import 'providers/admin_provider.dart';
 import 'providers/announcement_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/external_calendar_provider.dart';
 import 'providers/feed_provider.dart';
 import 'providers/message_provider.dart';
 import 'providers/notification_prefs_provider.dart';
@@ -143,6 +145,7 @@ class FamilyCircleApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (ctx) => TodoProvider(ctx.read<_Repos>().todos),
         ),
+        ChangeNotifierProvider(create: (_) => ExternalCalendarProvider()),
         // Built once, after AuthProvider exists above it; GoRouter's own
         // refreshListenable (not a widget rebuild) reacts to auth changes.
         Provider<GoRouter>(
@@ -154,6 +157,7 @@ class FamilyCircleApp extends StatelessWidget {
           return MaterialApp.router(
             title: 'Family Circle',
             debugShowCheckedModeBanner: false,
+            scaffoldMessengerKey: appMessengerKey,
             theme: AppTheme.dark,
             themeMode: ThemeMode.dark,
             routerConfig: context.read<GoRouter>(),

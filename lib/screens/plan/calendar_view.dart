@@ -3,12 +3,15 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/calendar_event.dart';
+import '../../models/external_event.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/external_calendar_provider.dart';
 import '../../providers/plan_providers.dart';
 import '../../providers/user_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/time_format.dart';
 import '../../widgets/app_layout.dart';
+import 'external_sync_widgets.dart';
 
 enum _Mode { family, mine }
 
@@ -49,6 +52,14 @@ class _CalendarViewState extends State<CalendarView> {
         : [...mine, if (cal.overlayFamily) ...shared];
     final dayEvents = cal.onDay(visible, _selected);
 
+    // Events synced from the person's own Google / Outlook calendars. They
+    // only ever appear on "My calendar" and are read-only.
+    final ext = context.watch<ExternalCalendarProvider>();
+    final externalAll = _mode == _Mode.mine ? ext.all : const <ExternalEvent>[];
+    final externalDay = _mode == _Mode.mine
+        ? ext.onDay(_selected)
+        : const <ExternalEvent>[];
+
     final controls = <Widget>[
       SegmentedButton<_Mode>(
         segments: const [
@@ -87,6 +98,7 @@ class _CalendarViewState extends State<CalendarView> {
           value: cal.overlayFamily,
           onChanged: cal.setOverlayFamily,
         ),
+        if (ext.anyEnabled) ...[const SizedBox(height: 8), const SyncPanel()],
       ],
       const SizedBox(height: 8),
     ];
@@ -111,9 +123,21 @@ class _CalendarViewState extends State<CalendarView> {
             ? shared
             : (cal.overlayFamily ? shared : const []),
         privateEvents: _mode == _Mode.mine ? mine : const [],
+        externalEvents: externalAll,
         onSelect: (d) => setState(() => _selected = d),
       ),
     ];
+
+    // Own events and synced ones in one list, ordered by time of day.
+    final agendaItems = <({int minutes, Widget tile})>[
+      for (final e in dayEvents)
+        (minutes: e.minutesFromMidnight ?? -1, tile: _EventTile(event: e)),
+      for (final e in externalDay)
+        (
+          minutes: e.minutesFromMidnight ?? -1,
+          tile: ExternalEventTile(event: e),
+        ),
+    ]..sort((a, b) => a.minutes.compareTo(b.minutes));
 
     final agenda = <Widget>[
       Text(
@@ -121,7 +145,7 @@ class _CalendarViewState extends State<CalendarView> {
         style: Theme.of(context).textTheme.titleMedium,
       ),
       const SizedBox(height: 8),
-      if (dayEvents.isEmpty)
+      if (agendaItems.isEmpty)
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 16),
           child: Text(
@@ -130,7 +154,7 @@ class _CalendarViewState extends State<CalendarView> {
           ),
         )
       else
-        ...dayEvents.map((e) => _EventTile(event: e)),
+        ...agendaItems.map((i) => i.tile),
     ];
 
     final wide = isDesktopWidth(context);
@@ -223,6 +247,7 @@ class _MonthGrid extends StatelessWidget {
     required this.selected,
     required this.sharedEvents,
     required this.privateEvents,
+    required this.externalEvents,
     required this.onSelect,
   });
 
@@ -230,9 +255,15 @@ class _MonthGrid extends StatelessWidget {
   final DateTime selected;
   final List<CalendarEvent> sharedEvents;
   final List<CalendarEvent> privateEvents;
+  final List<ExternalEvent> externalEvents;
   final ValueChanged<DateTime> onSelect;
 
   bool _has(List<CalendarEvent> list, DateTime d) => list.any(
+    (e) =>
+        e.date.year == d.year && e.date.month == d.month && e.date.day == d.day,
+  );
+
+  bool _hasExternal(DateTime d) => externalEvents.any(
     (e) =>
         e.date.year == d.year && e.date.month == d.month && e.date.day == d.day,
   );
@@ -287,6 +318,7 @@ class _MonthGrid extends StatelessWidget {
     final isToday = isSameDay(date, today);
     final hasShared = _has(sharedEvents, date);
     final hasPrivate = _has(privateEvents, date);
+    final hasExternal = _hasExternal(date);
 
     return InkWell(
       borderRadius: BorderRadius.circular(12),
@@ -316,7 +348,12 @@ class _MonthGrid extends StatelessWidget {
                 if (hasShared) _dot(isSel ? AppColors.onGold : AppColors.gold),
                 if (hasShared && hasPrivate) const SizedBox(width: 3),
                 if (hasPrivate) _dot(isSel ? AppColors.onGold : AppColors.text),
-                if (!hasShared && !hasPrivate) const SizedBox(height: 5),
+                if ((hasShared || hasPrivate) && hasExternal)
+                  const SizedBox(width: 3),
+                if (hasExternal)
+                  _dot(isSel ? AppColors.onGold : kExternalColor),
+                if (!hasShared && !hasPrivate && !hasExternal)
+                  const SizedBox(height: 5),
               ],
             ),
           ],

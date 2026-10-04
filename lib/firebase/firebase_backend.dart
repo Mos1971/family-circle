@@ -296,7 +296,7 @@ class FirebaseBackend {
       listen(col('members'), (s) {
         users
           ..clear()
-          ..addAll(s.docs.map((d) => userFromDoc(d, circleId: cid)));
+          ..addAll(_safe(s, (d) => userFromDoc(d, circleId: cid)));
         for (final d in s.docs) {
           prefsByUserId[d.id] = prefsFromMap(d.data()['prefs']);
         }
@@ -307,45 +307,45 @@ class FirebaseBackend {
       listen(col('posts'), (s) {
         posts
           ..clear()
-          ..addAll(s.docs.map(postFromDoc));
+          ..addAll(_safe(s, postFromDoc));
         feedChanges.add(null);
       });
       listen(col('comments'), (s) {
         comments
           ..clear()
-          ..addAll(s.docs.map(commentFromDoc));
+          ..addAll(_safe(s, commentFromDoc));
         feedChanges.add(null);
       });
       listen(col('announcements'), (s) {
         announcements
           ..clear()
-          ..addAll(s.docs.map(announcementFromDoc));
+          ..addAll(_safe(s, announcementFromDoc));
         announcementChanges.add(null);
       });
       listen(col('notifications').where('userId', isEqualTo: id), (s) {
         notifications
           ..clear()
-          ..addAll(s.docs.map(notificationFromDoc));
+          ..addAll(_safe(s, notificationFromDoc));
         notificationChanges.add(null);
       });
       listen(col('messages').where('participants', arrayContains: id), (s) {
         directMessages
           ..clear()
-          ..addAll(s.docs.map(messageFromDoc));
+          ..addAll(_safe(s, messageFromDoc));
         messageChanges.add(null);
       });
       listen(col('events').where('shared', isEqualTo: true), (s) {
-        _sharedEvents = s.docs.map(eventFromDoc).toList();
+        _sharedEvents = _safe(s, eventFromDoc).toList();
         calendarChanges.add(null);
       });
       listen(col('events').where('ownerId', isEqualTo: id), (s) {
-        _ownEvents = s.docs.map(eventFromDoc).toList();
+        _ownEvents = _safe(s, eventFromDoc).toList();
         calendarChanges.add(null);
       });
       listen(col('todoLists').where('members', arrayContains: id), (s) {
         todoLists
           ..clear()
-          ..addAll(s.docs.map(todoFromDoc));
+          ..addAll(_safe(s, todoFromDoc));
         todoChanges.add(null);
       });
     }
@@ -355,7 +355,7 @@ class FirebaseBackend {
       _reportsSub = col('reports').snapshots().listen((s) {
         reports
           ..clear()
-          ..addAll(s.docs.map(reportFromDoc));
+          ..addAll(_safe(s, reportFromDoc));
         feedChanges.add(null);
       }, onError: (Object e) => debugPrint('Firestore reports: $e'));
     } else if (!me.isAdmin && _reportsSub != null) {
@@ -363,6 +363,23 @@ class FirebaseBackend {
       _reportsSub = null;
       reports.clear();
     }
+  }
+
+  /// Parses every document, skipping (and logging) any that are malformed so
+  /// one bad document can't blank the whole list.
+  List<T> _safe<T>(
+    QuerySnapshot<Json> snapshot,
+    T Function(DocumentSnapshot<Json>) parse,
+  ) {
+    final out = <T>[];
+    for (final d in snapshot.docs) {
+      try {
+        out.add(parse(d));
+      } catch (e) {
+        debugPrint('Skipping malformed document ${d.reference.path}: $e');
+      }
+    }
+    return out;
   }
 
   void listen(Query<Json> query, void Function(QuerySnapshot<Json>) onData) {

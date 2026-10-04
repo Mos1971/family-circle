@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import '../app_messenger.dart';
 import '../models/announcement.dart';
 import '../models/app_notification.dart';
 import '../models/calendar_event.dart';
@@ -31,7 +32,11 @@ import 'firebase_backend.dart';
 void _write(Future<void> future, String what) {
   future.then<void>(
     (_) {},
-    onError: (Object e) => debugPrint('Firestore write failed ($what): $e'),
+    onError: (Object e) {
+      debugPrint('Firestore write failed ($what): $e');
+      final code = e is FirebaseException ? e.code : e.runtimeType;
+      showAppMessage('Couldn\'t save that ($what). Please try again. [$code]');
+    },
   );
 }
 
@@ -285,6 +290,10 @@ class FirebaseFeedRepository implements FeedRepository {
       createdAt: DateTime.now(),
       type: type,
     );
+    // Show it straight away; Firestore's listener replaces this with the
+    // real document a moment later.
+    _b.posts.add(post);
+    _b.feedChanges.add(null);
     _write(ref.set(postToMap(post)), 'create post');
     _write(
       _b.col('members').doc(authorId).update({
@@ -360,6 +369,8 @@ class FirebaseFeedRepository implements FeedRepository {
       createdAt: DateTime.now(),
       parentCommentId: parentCommentId,
     );
+    _b.comments.add(comment);
+    _b.feedChanges.add(null);
     _write(ref.set(commentToMap(comment)), 'comment');
 
     final post = getPost(postId);
