@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/message_provider.dart';
 import '../providers/notification_provider.dart';
+import '../providers/user_provider.dart';
 import '../theme/app_theme.dart';
 import 'app_wordmark.dart';
 import 'member_avatar.dart';
@@ -122,9 +123,26 @@ class _Sidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(12, 0, 0, 28),
-            child: AppWordmark(fontSize: 30),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 0, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const AppWordmark(fontSize: 30),
+                if (context.watch<UserProvider>().circle != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    context.watch<UserProvider>().circle!.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
           for (final item in _items)
             tile(item, badge: item.path == '/messages' ? unreadMessages : 0),

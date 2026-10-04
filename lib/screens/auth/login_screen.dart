@@ -101,9 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: TextButton(
                     onPressed: () => context.push('/register'),
-                    child: const Text(
-                      'New here? Request to join your family circle',
-                    ),
+                    child: const Text('New here? Join or start a circle'),
                   ),
                 ),
                 const SizedBox(height: 32),

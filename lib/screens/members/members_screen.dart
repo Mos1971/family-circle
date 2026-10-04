@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../widgets/app_back_button.dart';
+
 import '../../models/user.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/user_provider.dart';
@@ -49,7 +51,7 @@ class _MembersScreenState extends State<MembersScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: (widget.pickToMessage || context.canPop())
-            ? BackButton(onPressed: () => context.pop())
+            ? AppBackButton()
             : null,
         title: Text(widget.pickToMessage ? 'New message' : 'Family'),
       ),

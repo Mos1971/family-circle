@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../widgets/app_back_button.dart';
+
 import '../../providers/auth_provider.dart';
 import '../../providers/plan_providers.dart';
 import '../../providers/user_provider.dart';
@@ -133,7 +135,7 @@ class _TodoDetailScreenState extends State<TodoDetailScreen> {
 
     if (me == null || list == null || !list.canView(me.id)) {
       return Scaffold(
-        appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
+        appBar: AppBar(leading: const AppBackButton()),
         body: const EmptyState(emoji: '✅', title: 'List not available'),
       );
     }
@@ -148,7 +150,7 @@ class _TodoDetailScreenState extends State<TodoDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.pop()),
+        leading: const AppBackButton(),
         title: Text(list.title),
         actions: [
           if (isOwner) ...[

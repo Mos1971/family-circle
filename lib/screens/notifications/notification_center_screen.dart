@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../widgets/app_back_button.dart';
+
 import '../../models/app_notification.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/notification_provider.dart';
@@ -23,7 +25,7 @@ class NotificationCenterScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.pop()),
+        leading: const AppBackButton(),
         title: const Text('Notifications'),
         actions: [
           if (items.isNotEmpty)
@@ -46,7 +48,11 @@ class NotificationCenterScreen extends StatelessWidget {
               itemBuilder: (context, i) {
                 final n = items[i];
                 return ListTile(
-                  onTap: () => notifications.markRead(n.id),
+                  onTap: () {
+                    notifications.markRead(n.id);
+                    final target = _targetFor(n.type);
+                    if (target != null) context.go(target);
+                  },
                   leading: CircleAvatar(
                     backgroundColor: n.read
                         ? AppColors.border
@@ -72,5 +78,23 @@ class NotificationCenterScreen extends StatelessWidget {
               },
             ),
     );
+  }
+}
+
+/// Where tapping a notification of this kind should take you.
+String? _targetFor(AppNotificationType type) {
+  switch (type) {
+    case AppNotificationType.message:
+      return '/messages';
+    case AppNotificationType.event:
+    case AppNotificationType.todo:
+      return '/plan';
+    case AppNotificationType.announcement:
+      return '/announcements';
+    case AppNotificationType.comment:
+    case AppNotificationType.reaction:
+      return '/feed';
+    case AppNotificationType.community:
+      return null;
   }
 }

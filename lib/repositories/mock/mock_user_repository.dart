@@ -1,4 +1,5 @@
 import '../../models/app_notification.dart';
+import '../../models/circle.dart';
 import '../../models/user.dart';
 import '../user_repository.dart';
 import 'mock_backend.dart';
@@ -7,6 +8,14 @@ class MockUserRepository implements UserRepository {
   MockUserRepository(this._backend);
 
   final MockBackend _backend;
+
+  @override
+  Circle? get circle => const Circle(
+    id: 'mock',
+    name: 'Family Circle',
+    code: 'DEMO2345',
+    ownerId: 'u_admin',
+  );
 
   @override
   List<AppUser> getAll() => List.unmodifiable(_backend.users);

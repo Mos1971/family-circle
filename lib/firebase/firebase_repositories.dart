@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../models/announcement.dart';
 import '../models/app_notification.dart';
 import '../models/calendar_event.dart';
+import '../models/circle.dart';
 import '../models/comment.dart';
 import '../models/direct_message.dart';
 import '../models/notification_prefs.dart';
@@ -72,7 +73,9 @@ class FirebaseAuthRepository implements AuthRepository {
     required String familyName,
     required String email,
     required String password,
-    required String verificationNote,
+    String? inviteCode,
+    String? licenseCode,
+    String? circleName,
   }) async {
     try {
       return await _b.register(
@@ -80,9 +83,16 @@ class FirebaseAuthRepository implements AuthRepository {
         familyName: familyName,
         email: email,
         password: password,
+        inviteCode: inviteCode,
+        licenseCode: licenseCode,
+        circleName: circleName,
       );
     } on FirebaseAuthException catch (e) {
       throw Exception(_friendlyAuthError(e));
+    } on FirebaseException {
+      throw Exception(
+        'We couldn\x27t complete sign-up. Please check your codes and try again.',
+      );
     }
   }
 
@@ -113,6 +123,9 @@ class FirebaseUserRepository implements UserRepository {
   DocumentReference<Json> _doc(String id) => _b.db.collection('users').doc(id);
 
   @override
+  Circle? get circle => _b.circle;
+
+  @override
   List<AppUser> getAll() => List.unmodifiable(_b.users);
 
   @override
@@ -138,7 +151,7 @@ class FirebaseUserRepository implements UserRepository {
       createdAt: DateTime.now(),
       type: PostType.welcome,
     );
-    _write(_b.db.collection('posts').add(postToMap(post)), 'welcome post');
+    _write(_b.col('posts').add(postToMap(post)), 'welcome post');
 
     for (final m in _b.approvedMembers) {
       if (m.id == userId || !_b.prefsFor(m.id).communityOn) continue;
@@ -223,7 +236,7 @@ class FirebaseFeedRepository implements FeedRepository {
     required String text,
     PostType type = PostType.normal,
   }) {
-    final ref = _b.db.collection('posts').doc();
+    final ref = _b.col('posts').doc();
     final post = Post(
       id: ref.id,
       authorId: authorId,
@@ -249,11 +262,11 @@ class FirebaseFeedRepository implements FeedRepository {
     final allowed =
         post.authorId == requestingUserId || (requester?.isAdmin ?? false);
     if (!allowed) return;
-    _write(_b.db.collection('posts').doc(postId).delete(), 'delete post');
+    _write(_b.col('posts').doc(postId).delete(), 'delete post');
     // Only admins may delete other people's comments, so tidy up for them.
     if (requester?.isAdmin ?? false) {
       for (final c in _b.comments.where((c) => c.postId == postId)) {
-        _write(_b.db.collection('comments').doc(c.id).delete(), 'comment');
+        _write(_b.col('comments').doc(c.id).delete(), 'comment');
       }
     }
   }
@@ -271,7 +284,7 @@ class FirebaseFeedRepository implements FeedRepository {
             ? FieldValue.arrayUnion([userId])
             : FieldValue.arrayRemove([userId]),
     };
-    _write(_b.db.collection('posts').doc(postId).update(update), 'reaction');
+    _write(_b.col('posts').doc(postId).update(update), 'reaction');
     if (!already && post.authorId != userId) {
       final author = _b.userById(post.authorId);
       if (author != null && _b.prefsFor(author.id).reactionsOn) {
@@ -297,7 +310,7 @@ class FirebaseFeedRepository implements FeedRepository {
     required String text,
     String? parentCommentId,
   }) {
-    final ref = _b.db.collection('comments').doc();
+    final ref = _b.col('comments').doc();
     final comment = Comment(
       id: ref.id,
       postId: postId,
@@ -326,7 +339,7 @@ class FirebaseFeedRepository implements FeedRepository {
   @override
   void reportPost(String postId, String reporterId) {
     _write(
-      _b.db.collection('posts').doc(postId).update({
+      _b.col('posts').doc(postId).update({
         'reportedCount': FieldValue.increment(1),
       }),
       'report count',
@@ -357,7 +370,7 @@ class FirebaseFeedRepository implements FeedRepository {
       reporterId: by,
       createdAt: DateTime.now(),
     );
-    _write(_b.db.collection('reports').add(reportToMap(report)), 'report');
+    _write(_b.col('reports').add(reportToMap(report)), 'report');
   }
 
   @override
@@ -373,21 +386,18 @@ class FirebaseFeedRepository implements FeedRepository {
     }
     if (report == null) return;
     _write(
-      _b.db.collection('reports').doc(reportId).update({'resolved': true}),
+      _b.col('reports').doc(reportId).update({'resolved': true}),
       'resolve report',
     );
     if (!removeContent) return;
     if (report.contentType == ReportedContentType.post) {
-      _write(
-        _b.db.collection('posts').doc(report.contentId).delete(),
-        'remove post',
-      );
+      _write(_b.col('posts').doc(report.contentId).delete(), 'remove post');
       for (final c in _b.comments.where((c) => c.postId == report!.contentId)) {
-        _write(_b.db.collection('comments').doc(c.id).delete(), 'comment');
+        _write(_b.col('comments').doc(c.id).delete(), 'comment');
       }
     } else {
       _write(
-        _b.db.collection('comments').doc(report.contentId).delete(),
+        _b.col('comments').doc(report.contentId).delete(),
         'remove comment',
       );
     }
@@ -401,8 +411,7 @@ class FirebaseAnnouncementRepository implements AnnouncementRepository {
   FirebaseAnnouncementRepository(this._b);
   final FirebaseBackend _b;
 
-  DocumentReference<Json> _doc(String id) =>
-      _b.db.collection('announcements').doc(id);
+  DocumentReference<Json> _doc(String id) => _b.col('announcements').doc(id);
 
   @override
   List<Announcement> getAll() => _b.announcements.toList()
@@ -418,7 +427,7 @@ class FirebaseAnnouncementRepository implements AnnouncementRepository {
     required String authorId,
     bool pinned = false,
   }) {
-    final ref = _b.db.collection('announcements').doc();
+    final ref = _b.col('announcements').doc();
     final a = Announcement(
       id: ref.id,
       title: title,
@@ -495,9 +504,7 @@ class FirebaseNotificationRepository implements NotificationRepository {
 
   @override
   void markRead(String notificationId) => _write(
-    _b.db.collection('notifications').doc(notificationId).update({
-      'read': true,
-    }),
+    _b.col('notifications').doc(notificationId).update({'read': true}),
     'mark read',
   );
 
@@ -506,7 +513,7 @@ class FirebaseNotificationRepository implements NotificationRepository {
     final batch = _b.db.batch();
     var any = false;
     for (final n in getFor(userId).where((n) => !n.read)) {
-      batch.update(_b.db.collection('notifications').doc(n.id), {'read': true});
+      batch.update(_b.col('notifications').doc(n.id), {'read': true});
       any = true;
     }
     if (any) _write(batch.commit(), 'mark all read');
@@ -602,7 +609,7 @@ class FirebaseMessageRepository implements MessageRepository {
     if (recipient == null || recipient.status != MemberStatus.approved) {
       throw StateError('That member is not available to message.');
     }
-    final ref = _b.db.collection('messages').doc();
+    final ref = _b.col('messages').doc();
     final message = DirectMessage(
       id: ref.id,
       senderId: senderId,
@@ -632,7 +639,7 @@ class FirebaseMessageRepository implements MessageRepository {
     if (unread.isEmpty) return;
     final batch = _b.db.batch();
     for (final m in unread) {
-      batch.update(_b.db.collection('messages').doc(m.id), {'read': true});
+      batch.update(_b.col('messages').doc(m.id), {'read': true});
     }
     _write(batch.commit(), 'mark thread read');
   }
@@ -649,7 +656,7 @@ class FirebaseCalendarRepository implements CalendarRepository {
   FirebaseCalendarRepository(this._b);
   final FirebaseBackend _b;
 
-  DocumentReference<Json> _doc(String id) => _b.db.collection('events').doc(id);
+  DocumentReference<Json> _doc(String id) => _b.col('events').doc(id);
 
   @override
   List<CalendarEvent> getShared() =>
@@ -677,7 +684,7 @@ class FirebaseCalendarRepository implements CalendarRepository {
     String notes = '',
     required bool shared,
   }) {
-    final ref = _b.db.collection('events').doc();
+    final ref = _b.col('events').doc();
     final event = CalendarEvent(
       id: ref.id,
       ownerId: ownerId,
@@ -723,7 +730,7 @@ class FirebaseCalendarRepository implements CalendarRepository {
     for (final e in _b.events) {
       if (e.copiedFromId == eventId && e.ownerId == userId) return e;
     }
-    final ref = _b.db.collection('events').doc();
+    final ref = _b.col('events').doc();
     final copy = CalendarEvent(
       id: ref.id,
       ownerId: userId,
@@ -765,8 +772,7 @@ class FirebaseTodoRepository implements TodoRepository {
   FirebaseTodoRepository(this._b);
   final FirebaseBackend _b;
 
-  DocumentReference<Json> _doc(String id) =>
-      _b.db.collection('todoLists').doc(id);
+  DocumentReference<Json> _doc(String id) => _b.col('todoLists').doc(id);
 
   @override
   List<TodoList> getFor(String userId) =>
@@ -782,7 +788,7 @@ class FirebaseTodoRepository implements TodoRepository {
 
   @override
   TodoList create({required String ownerId, required String title}) {
-    final ref = _b.db.collection('todoLists').doc();
+    final ref = _b.col('todoLists').doc();
     final list = TodoList(id: ref.id, ownerId: ownerId, title: title);
     _write(ref.set(todoToMap(list)), 'create list');
     return list;

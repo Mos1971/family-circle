@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/announcement.dart';
 import '../models/app_notification.dart';
 import '../models/calendar_event.dart';
+import '../models/circle.dart';
 import '../models/comment.dart';
 import '../models/direct_message.dart';
 import '../models/notification_prefs.dart';
@@ -28,6 +29,7 @@ T _enum<T extends Enum>(List<T> values, dynamic name, T fallback) {
 Map<String, dynamic> userToMap(AppUser u) => {
   'firstName': u.firstName,
   'familyName': u.familyName,
+  'circleId': u.circleId,
   'email': u.email,
   'bio': u.bio,
   'role': u.role.name,
@@ -44,6 +46,7 @@ AppUser userFromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
     id: d.id,
     firstName: m['firstName'] ?? '',
     familyName: m['familyName'] ?? '',
+    circleId: m['circleId'] ?? '',
     email: m['email'] ?? '',
     bio: m['bio'] ?? '',
     role: _enum(MemberRole.values, m['role'], MemberRole.member),
@@ -280,5 +283,15 @@ TodoList todoFromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
         ),
     ],
     sharedWith: Set<String>.from(m['sharedWith'] as List? ?? const []),
+  );
+}
+
+Circle circleFromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
+  final m = d.data()!;
+  return Circle(
+    id: d.id,
+    name: m['name'] ?? 'Family Circle',
+    code: m['code'] ?? '',
+    ownerId: m['ownerId'] ?? '',
   );
 }

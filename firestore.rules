@@ -1,15 +1,20 @@
 rules_version = '2';
 
-// Family Circle security rules.
+// Family Circle security rules (multi-tenant).
+//
+// Every customer gets their own "circle". All of a circle's data lives under
+// /circles/{circleId}/..., and a person can only touch the circle named on
+// their own profile (/users/{uid}.circleId) — and only once approved.
 //
 // Principles:
-//  * Nobody can do anything unless signed in.
-//  * A person who has just registered is "pending": they can see and edit only
-//    their own profile until an admin approves them.
+//  * Nobody can do anything unless signed in (except checking an invite or
+//    licence code during sign-up).
+//  * A newly registered member is "pending": they can see only their own
+//    profile and their circle's name until that circle's admin approves them.
 //  * Private data (messages, private events, lists, notifications) is only
-//    readable by the people it belongs to.
-//  * Only admins can approve/remove members, change roles, post announcements
-//    and see reports.
+//    readable by the people it belongs to — never by other circles, never by
+//    the app owner.
+//  * New circles can only be created with a valid one-time licence code.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -18,148 +23,218 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function myDoc() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
     }
 
-    function isApproved() {
-      return signedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && myDoc().data.status == 'approved';
+    function hasProfile() {
+      return signedIn() && exists(userPath(request.auth.uid));
     }
 
-    function isAdmin() {
-      return isApproved() && myDoc().data.role == 'admin';
+    function me() {
+      return get(userPath(request.auth.uid)).data;
     }
 
-    function isApprovedUser(uid) {
-      return exists(/databases/$(database)/documents/users/$(uid))
-        && get(/databases/$(database)/documents/users/$(uid)).data.status == 'approved';
+    // Approved member of this specific circle.
+    function inCircle(cid) {
+      return hasProfile() && me().status == 'approved' && me().circleId == cid;
+    }
+
+    function adminOf(cid) {
+      return inCircle(cid) && me().role == 'admin';
+    }
+
+    function approvedInCircle(uid, cid) {
+      return exists(userPath(uid))
+        && get(userPath(uid)).data.status == 'approved'
+        && get(userPath(uid)).data.circleId == cid;
+    }
+
+    // ---- licence codes (issued by the app owner) -------------------------
+    // Codes are long and random, so they can be checked one at a time but
+    // never listed.
+    match /licenses/{code} {
+      allow get: if true;
+      allow list: if false;
+      allow create, delete: if false;
+      // Redeeming: unused -> used, nothing else.
+      allow update: if signedIn()
+        && resource.data.used == false
+        && request.resource.data.used == true
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['used', 'circleId', 'usedBy', 'usedAt']);
+    }
+
+    // ---- invite codes (one per circle) -----------------------------------
+    match /inviteCodes/{code} {
+      allow get: if true;
+      allow list: if false;
+      // Only created together with the circle, by that circle's owner.
+      allow create: if signedIn()
+        && !exists(/databases/$(database)/documents/inviteCodes/$(code))
+        && getAfter(/databases/$(database)/documents/circles/$(request.resource.data.circleId)).data.ownerId == request.auth.uid;
+      allow update, delete: if false;
     }
 
     // ---- users -----------------------------------------------------------
     match /users/{userId} {
-      // Approved members can see everyone (names for the feed/directory);
-      // pending members can only see themselves.
-      allow read: if signedIn() && (request.auth.uid == userId || isApproved());
+      // See yourself, or fellow approved members of your own circle.
+      allow read: if signedIn() && (
+        request.auth.uid == userId
+        || (hasProfile() && me().status == 'approved'
+            && resource.data.circleId == me().circleId)
+      );
 
-      // You can only create your own profile, and only as a pending member.
       allow create: if signedIn()
         && request.auth.uid == userId
-        && request.resource.data.status == 'pending'
-        && request.resource.data.role == 'member'
         && request.resource.data.keys().hasOnly([
-             'firstName', 'familyName', 'email', 'bio', 'role', 'status',
-             'joinDate', 'postCount', 'profileEmoji', 'prefs'
-           ]);
+             'firstName', 'familyName', 'circleId', 'email', 'bio', 'role',
+             'status', 'joinDate', 'postCount', 'profileEmoji', 'prefs'
+           ])
+        && request.resource.data.circleId is string
+        && request.resource.data.circleId.size() > 0
+        && (
+          // Joining an existing circle: always pending, always a member.
+          (request.resource.data.status == 'pending'
+            && request.resource.data.role == 'member'
+            && exists(/databases/$(database)/documents/circles/$(request.resource.data.circleId)))
+          ||
+          // Founding a brand-new circle: admin of a circle created in the
+          // same batch (the circle did not exist before).
+          (request.resource.data.status == 'approved'
+            && request.resource.data.role == 'admin'
+            && !exists(/databases/$(database)/documents/circles/$(request.resource.data.circleId))
+            && getAfter(/databases/$(database)/documents/circles/$(request.resource.data.circleId)).data.ownerId == request.auth.uid)
+        );
 
       allow update: if
         // Members can edit their own harmless fields.
         (signedIn() && request.auth.uid == userId
           && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['bio', 'prefs', 'postCount', 'profileEmoji']))
-        // Admins can approve/remove members and change roles.
-        || (isAdmin()
+        // Admins can approve/remove members and change roles — only inside
+        // their own circle.
+        || (adminOf(resource.data.circleId)
           && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['status', 'role']));
 
       allow delete: if false;
     }
 
-    // ---- feed ------------------------------------------------------------
-    match /posts/{postId} {
-      allow read: if isApproved();
-      // Normal posts are authored by the poster; admins also create the
-      // automatic "welcome" post on behalf of a newly approved member.
-      allow create: if isApproved()
-        && ((request.resource.data.authorId == request.auth.uid)
-            || (isAdmin() && request.resource.data.type == 'welcome'));
-      // Reactions / report counter / hidden flag only.
-      allow update: if isApproved()
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['reactions', 'reportedCount', 'hidden']);
-      allow delete: if isApproved()
-        && (resource.data.authorId == request.auth.uid || isAdmin());
-    }
+    // ---- circles ---------------------------------------------------------
+    match /circles/{cid} {
+      // Anyone with a profile in the circle (even pending) can see its name.
+      allow get: if hasProfile() && me().circleId == cid;
+      allow list: if false;
 
-    match /comments/{commentId} {
-      allow read: if isApproved();
-      allow create: if isApproved() && request.resource.data.authorId == request.auth.uid;
-      allow delete: if isApproved()
-        && (resource.data.authorId == request.auth.uid || isAdmin());
-      allow update: if false;
-    }
-
-    match /reports/{reportId} {
-      allow create: if isApproved() && request.resource.data.reporterId == request.auth.uid;
-      allow read, update, delete: if isAdmin();
-    }
-
-    // ---- announcements ---------------------------------------------------
-    match /announcements/{id} {
-      allow read: if isApproved();
-      allow create, update, delete: if isAdmin();
-    }
-
-    // ---- notifications ---------------------------------------------------
-    // Anyone approved can send a notification to someone (e.g. "X sent you a
-    // message"); only the recipient can read or change it.
-    match /notifications/{id} {
-      allow read, delete: if signedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isApproved();
-      allow update: if signedIn() && resource.data.userId == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
-    }
-
-    // ---- private messages -----------------------------------------------
-    // Only the two participants can ever read a message.
-    match /messages/{id} {
-      allow read: if signedIn() && request.auth.uid in resource.data.participants;
-      allow create: if isApproved()
-        && request.resource.data.senderId == request.auth.uid
-        && request.resource.data.participants.size() == 2
-        && request.resource.data.participants.hasAll(
-             [request.resource.data.senderId, request.resource.data.recipientId])
-        && request.resource.data.senderId != request.resource.data.recipientId
-        && isApprovedUser(request.resource.data.recipientId);
-      // The recipient can mark a message as read; nothing else is editable.
-      allow update: if signedIn()
-        && resource.data.recipientId == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
-      allow delete: if false;
-    }
-
-    // ---- calendar --------------------------------------------------------
-    match /events/{id} {
-      // Family events are visible to every member; private ones to the owner.
-      allow read: if (isApproved() && resource.data.shared == true)
-        || (signedIn() && resource.data.ownerId == request.auth.uid);
-      allow create: if isApproved() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isApproved() && resource.data.ownerId == request.auth.uid
-        && request.resource.data.ownerId == resource.data.ownerId;
-      allow delete: if isApproved()
-        && (resource.data.ownerId == request.auth.uid
-            || (resource.data.shared == true && isAdmin()));
-    }
-
-    // ---- to-do lists -----------------------------------------------------
-    // 'members' = owner + the people the list is shared with.
-    match /todoLists/{id} {
-      allow read: if signedIn() && request.auth.uid in resource.data.members;
-      allow create: if isApproved()
+      // Creating a circle burns a valid, unused licence in the same batch.
+      allow create: if signedIn()
         && request.resource.data.ownerId == request.auth.uid
-        && request.auth.uid in request.resource.data.members;
-      // Any member can tick/add items; only the owner can change sharing.
-      allow update: if signedIn()
-        && request.auth.uid in resource.data.members
-        && request.resource.data.ownerId == resource.data.ownerId
-        && (resource.data.ownerId == request.auth.uid
-            || (request.resource.data.sharedWith == resource.data.sharedWith
-                && request.resource.data.members == resource.data.members));
-      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+        && exists(/databases/$(database)/documents/licenses/$(request.resource.data.licenseCode))
+        && get(/databases/$(database)/documents/licenses/$(request.resource.data.licenseCode)).data.used == false
+        && getAfter(/databases/$(database)/documents/licenses/$(request.resource.data.licenseCode)).data.used == true
+        && getAfter(/databases/$(database)/documents/licenses/$(request.resource.data.licenseCode)).data.circleId == cid;
+
+      allow update: if adminOf(cid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']);
+      allow delete: if false;
+
+      // ---- feed ----------------------------------------------------------
+      match /posts/{postId} {
+        allow read: if inCircle(cid);
+        // Normal posts are authored by the poster; admins also create the
+        // automatic "welcome" post on behalf of a newly approved member.
+        allow create: if inCircle(cid)
+          && ((request.resource.data.authorId == request.auth.uid)
+              || (adminOf(cid) && request.resource.data.type == 'welcome'));
+        // Reactions / report counter / hidden flag only.
+        allow update: if inCircle(cid)
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['reactions', 'reportedCount', 'hidden']);
+        allow delete: if inCircle(cid)
+          && (resource.data.authorId == request.auth.uid || adminOf(cid));
+      }
+
+      match /comments/{commentId} {
+        allow read: if inCircle(cid);
+        allow create: if inCircle(cid) && request.resource.data.authorId == request.auth.uid;
+        allow delete: if inCircle(cid)
+          && (resource.data.authorId == request.auth.uid || adminOf(cid));
+        allow update: if false;
+      }
+
+      match /reports/{reportId} {
+        allow create: if inCircle(cid) && request.resource.data.reporterId == request.auth.uid;
+        allow read, update, delete: if adminOf(cid);
+      }
+
+      // ---- announcements -------------------------------------------------
+      match /announcements/{id} {
+        allow read: if inCircle(cid);
+        allow create, update, delete: if adminOf(cid);
+      }
+
+      // ---- notifications -------------------------------------------------
+      // Any member can send a notification to someone in the same circle
+      // (e.g. "X sent you a message"); only the recipient can read or change it.
+      match /notifications/{id} {
+        allow read, delete: if signedIn() && resource.data.userId == request.auth.uid;
+        allow create: if inCircle(cid)
+          && approvedInCircle(request.resource.data.userId, cid);
+        allow update: if signedIn() && resource.data.userId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      }
+
+      // ---- private messages ---------------------------------------------
+      // Only the two participants can ever read a message.
+      match /messages/{id} {
+        allow read: if signedIn() && request.auth.uid in resource.data.participants;
+        allow create: if inCircle(cid)
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.participants.size() == 2
+          && request.resource.data.participants.hasAll(
+               [request.resource.data.senderId, request.resource.data.recipientId])
+          && request.resource.data.senderId != request.resource.data.recipientId
+          && approvedInCircle(request.resource.data.recipientId, cid);
+        // The recipient can mark a message as read; nothing else is editable.
+        allow update: if signedIn()
+          && resource.data.recipientId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+        allow delete: if false;
+      }
+
+      // ---- calendar ------------------------------------------------------
+      match /events/{id} {
+        // Family events are visible to every member; private ones to the owner.
+        allow read: if (inCircle(cid) && resource.data.shared == true)
+          || (signedIn() && resource.data.ownerId == request.auth.uid);
+        allow create: if inCircle(cid) && request.resource.data.ownerId == request.auth.uid;
+        allow update: if inCircle(cid) && resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId;
+        allow delete: if inCircle(cid)
+          && (resource.data.ownerId == request.auth.uid
+              || (resource.data.shared == true && adminOf(cid)));
+      }
+
+      // ---- to-do lists ---------------------------------------------------
+      // 'members' = owner + the people the list is shared with.
+      match /todoLists/{id} {
+        allow read: if signedIn() && request.auth.uid in resource.data.members;
+        allow create: if inCircle(cid)
+          && request.resource.data.ownerId == request.auth.uid
+          && request.auth.uid in request.resource.data.members;
+        // Any member can tick/add items; only the owner can change sharing.
+        allow update: if signedIn()
+          && request.auth.uid in resource.data.members
+          && request.resource.data.ownerId == resource.data.ownerId
+          && (resource.data.ownerId == request.auth.uid
+              || (request.resource.data.sharedWith == resource.data.sharedWith
+                  && request.resource.data.members == resource.data.members));
+        allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+      }
     }
 
-    // Everything else is locked.
+    // Everything else is locked (including the old un-circled collections).
     match /{document=**} {
       allow read, write: if false;
     }

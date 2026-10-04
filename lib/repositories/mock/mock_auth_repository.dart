@@ -20,7 +20,9 @@ class MockAuthRepository implements AuthRepository {
     required String familyName,
     required String email,
     required String password,
-    required String verificationNote,
+    String? inviteCode,
+    String? licenseCode,
+    String? circleName,
   }) async {
     final user = AppUser(
       id: _backend.newId(),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
+import '../../widgets/app_back_button.dart';
 
 import '../../models/comment.dart';
 import '../../providers/auth_provider.dart';
@@ -63,7 +64,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
     if (post == null) {
       return Scaffold(
-        appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
+        appBar: AppBar(leading: const AppBackButton()),
         body: const EmptyState(
           emoji: '🙈',
           title: 'This post is no longer available',
@@ -79,10 +80,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Post'),
-        leading: BackButton(onPressed: () => context.pop()),
-      ),
+      appBar: AppBar(title: const Text('Post'), leading: const AppBackButton()),
       body: Column(
         children: [
           Expanded(

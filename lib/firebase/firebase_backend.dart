@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import '../models/announcement.dart';
 import '../models/app_notification.dart';
 import '../models/calendar_event.dart';
+import '../models/circle.dart';
 import '../models/comment.dart';
 import '../models/direct_message.dart';
 import '../models/notification_prefs.dart';
@@ -56,6 +58,8 @@ class FirebaseBackend {
   List<CalendarEvent> _ownEvents = [];
 
   AppUser? currentUser;
+  Circle? circle;
+  StreamSubscription<DocumentSnapshot<Json>>? _circleSub;
 
   // ---- Change streams -----------------------------------------------------
   final userChanges = StreamController<void>.broadcast();
@@ -97,6 +101,11 @@ class FirebaseBackend {
     return byId.values.toList();
   }
 
+  /// A collection inside the signed-in user's circle. All shared data lives
+  /// under `circles/{circleId}/...` so circles are fully separate.
+  CollectionReference<Json> col(String name) =>
+      db.collection('circles').doc(currentUser!.circleId).collection(name);
+
   String newId(String collection) => db.collection(collection).doc().id;
 
   // ---- Lifecycle ----------------------------------------------------------
@@ -112,9 +121,12 @@ class FirebaseBackend {
 
   void _onAuth(User? user) {
     _userSub?.cancel();
+    _circleSub?.cancel();
+    _circleSub = null;
     _stopData();
     _clearCaches();
     currentUser = null;
+    circle = null;
 
     if (user == null) {
       authChanges.add(null);
@@ -146,6 +158,7 @@ class FirebaseBackend {
     prefsByUserId[me.id] = prefsFromMap(snap.data()!['prefs']);
     currentUser = me;
     if (userById(me.id) == null) users.add(me);
+    _watchCircle(me.circleId);
 
     if (me.isApproved) {
       _startData(me);
@@ -155,6 +168,18 @@ class FirebaseBackend {
     _completeReady();
     authChanges.add(me);
     userChanges.add(null);
+  }
+
+  /// Keeps the circle's name and invite code up to date (readable even
+  /// while the member is still waiting for approval).
+  void _watchCircle(String circleId) {
+    if (circleId.isEmpty || circle?.id == circleId && _circleSub != null)
+      return;
+    _circleSub?.cancel();
+    _circleSub = db.collection('circles').doc(circleId).snapshots().listen((s) {
+      circle = s.exists ? circleFromDoc(s) : null;
+      userChanges.add(null);
+    }, onError: (Object e) => debugPrint('Firestore circle: $e'));
   }
 
   void _clearCaches() {
@@ -186,7 +211,9 @@ class FirebaseBackend {
       _dataStarted = true;
       final id = me.id;
 
-      listen(db.collection('users'), (s) {
+      listen(db.collection('users').where('circleId', isEqualTo: me.circleId), (
+        s,
+      ) {
         users
           ..clear()
           ..addAll(s.docs.map(userFromDoc));
@@ -197,52 +224,45 @@ class FirebaseBackend {
         if (mine != null) currentUser = mine;
         userChanges.add(null);
       });
-      listen(db.collection('posts'), (s) {
+      listen(col('posts'), (s) {
         posts
           ..clear()
           ..addAll(s.docs.map(postFromDoc));
         feedChanges.add(null);
       });
-      listen(db.collection('comments'), (s) {
+      listen(col('comments'), (s) {
         comments
           ..clear()
           ..addAll(s.docs.map(commentFromDoc));
         feedChanges.add(null);
       });
-      listen(db.collection('announcements'), (s) {
+      listen(col('announcements'), (s) {
         announcements
           ..clear()
           ..addAll(s.docs.map(announcementFromDoc));
         announcementChanges.add(null);
       });
-      listen(db.collection('notifications').where('userId', isEqualTo: id), (
-        s,
-      ) {
+      listen(col('notifications').where('userId', isEqualTo: id), (s) {
         notifications
           ..clear()
           ..addAll(s.docs.map(notificationFromDoc));
         notificationChanges.add(null);
       });
-      listen(
-        db.collection('messages').where('participants', arrayContains: id),
-        (s) {
-          directMessages
-            ..clear()
-            ..addAll(s.docs.map(messageFromDoc));
-          messageChanges.add(null);
-        },
-      );
-      listen(db.collection('events').where('shared', isEqualTo: true), (s) {
+      listen(col('messages').where('participants', arrayContains: id), (s) {
+        directMessages
+          ..clear()
+          ..addAll(s.docs.map(messageFromDoc));
+        messageChanges.add(null);
+      });
+      listen(col('events').where('shared', isEqualTo: true), (s) {
         _sharedEvents = s.docs.map(eventFromDoc).toList();
         calendarChanges.add(null);
       });
-      listen(db.collection('events').where('ownerId', isEqualTo: id), (s) {
+      listen(col('events').where('ownerId', isEqualTo: id), (s) {
         _ownEvents = s.docs.map(eventFromDoc).toList();
         calendarChanges.add(null);
       });
-      listen(db.collection('todoLists').where('members', arrayContains: id), (
-        s,
-      ) {
+      listen(col('todoLists').where('members', arrayContains: id), (s) {
         todoLists
           ..clear()
           ..addAll(s.docs.map(todoFromDoc));
@@ -252,7 +272,7 @@ class FirebaseBackend {
 
     // Reports are admin-only, and admin status can change at runtime.
     if (me.isAdmin && _reportsSub == null) {
-      _reportsSub = db.collection('reports').snapshots().listen((s) {
+      _reportsSub = col('reports').snapshots().listen((s) {
         reports
           ..clear()
           ..addAll(s.docs.map(reportFromDoc));
@@ -276,26 +296,107 @@ class FirebaseBackend {
 
   // ---- Auth actions -------------------------------------------------------
 
+  static const _codeAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+  String _randomCode(int length) {
+    final r = Random.secure();
+    return List.generate(
+      length,
+      (_) => _codeAlphabet[r.nextInt(_codeAlphabet.length)],
+    ).join();
+  }
+
+  /// Two ways in:
+  ///  * **Join** an existing circle with its invite code — you become a
+  ///    pending member until that circle's admin approves you.
+  ///  * **Create** a new circle with a one-time licence code — you become its
+  ///    admin straight away.
   Future<AppUser> register({
     required String firstName,
     required String familyName,
     required String email,
     required String password,
+    String? inviteCode,
+    String? licenseCode,
+    String? circleName,
   }) async {
+    final joining = (inviteCode ?? '').trim().isNotEmpty;
+    final creating = (licenseCode ?? '').trim().isNotEmpty;
+    if (joining == creating) {
+      throw Exception(
+        'Enter an invite code to join, or a licence code to start a circle.',
+      );
+    }
+
+    late final String circleId;
+    String? license;
+    String? newCode;
+    if (joining) {
+      final code = inviteCode!.trim().toUpperCase();
+      final snap = await db.collection('inviteCodes').doc(code).get();
+      if (!snap.exists) {
+        throw Exception(
+          'That invite code isn\'t valid. Please check it with your circle admin.',
+        );
+      }
+      circleId = snap.data()!['circleId'] as String;
+    } else {
+      if ((circleName ?? '').trim().isEmpty) {
+        throw Exception('Please give your circle a name.');
+      }
+      license = licenseCode!.trim().toUpperCase();
+      final snap = await db.collection('licenses').doc(license).get();
+      if (!snap.exists || snap.data()!['used'] == true) {
+        throw Exception(
+          'That licence code isn\'t valid or has already been used.',
+        );
+      }
+      circleId = db.collection('circles').doc().id;
+      // Find an invite code nobody else has.
+      do {
+        newCode = _randomCode(8);
+      } while ((await db.collection('inviteCodes').doc(newCode).get()).exists);
+    }
+
     final cred = await auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
+    final uid = cred.user!.uid;
     final user = AppUser(
-      id: cred.user!.uid,
+      id: uid,
       firstName: firstName,
       familyName: familyName,
+      circleId: circleId,
       email: email,
-      status: MemberStatus.pending,
+      role: creating ? MemberRole.admin : MemberRole.member,
+      status: creating ? MemberStatus.approved : MemberStatus.pending,
       joinDate: DateTime.now(),
     );
     try {
-      await db.collection('users').doc(user.id).set(userToMap(user));
+      if (joining) {
+        await db.collection('users').doc(uid).set(userToMap(user));
+      } else {
+        final batch = db.batch();
+        batch.set(db.collection('circles').doc(circleId), {
+          'name': circleName!.trim(),
+          'ownerId': uid,
+          'code': newCode,
+          'licenseCode': license,
+          'createdAt': Timestamp.now(),
+        });
+        batch.set(db.collection('inviteCodes').doc(newCode), {
+          'circleId': circleId,
+        });
+        batch.update(db.collection('licenses').doc(license), {
+          'used': true,
+          'circleId': circleId,
+          'usedBy': uid,
+          'usedAt': Timestamp.now(),
+        });
+        batch.set(db.collection('users').doc(uid), userToMap(user));
+        await batch.commit();
+      }
     } catch (e) {
       // Don't leave an account with no profile behind.
       await cred.user!.delete();
@@ -332,8 +433,7 @@ class FirebaseBackend {
       body: body,
       createdAt: DateTime.now(),
     );
-    db
-        .collection('notifications')
+    col('notifications')
         .add(notificationToMap(n))
         .then<void>(
           (_) {},

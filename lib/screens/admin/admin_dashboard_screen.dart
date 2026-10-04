@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
+import '../../widgets/app_back_button.dart';
 
 import '../../models/report.dart';
 import '../../models/user.dart';
@@ -35,12 +38,19 @@ class AdminDashboardScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.pop()),
+        leading: const AppBackButton(),
         title: const Text('Admin Dashboard'),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
+          if (users.circle != null) ...[
+            _InviteCodeCard(
+              circleName: users.circle!.name,
+              code: users.circle!.code,
+            ),
+            const SizedBox(height: 16),
+          ],
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -336,4 +346,63 @@ Future<void> _confirmRemove(BuildContext context, AppUser user) async {
     ),
   );
   if (ok == true) users.reject(user.id);
+}
+
+/// Shows the code family members need to ask to join this circle.
+class _InviteCodeCard extends StatelessWidget {
+  const _InviteCodeCard({required this.circleName, required this.code});
+
+  final String circleName;
+  final String code;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceHigh,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(circleName, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          const Text(
+            'Share this invite code with family. They enter it when they '
+            'sign up, then you approve them below.',
+            style: TextStyle(fontSize: 12, color: AppColors.muted),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: SelectableText(
+                  code.isEmpty ? '—' : code,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 4,
+                    color: AppColors.gold,
+                  ),
+                ),
+              ),
+              if (code.isNotEmpty)
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.copy, size: 18),
+                  label: const Text('Copy'),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: code));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Invite code copied.')),
+                    );
+                  },
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

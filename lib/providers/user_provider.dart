@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../models/circle.dart';
 import '../models/user.dart';
 import '../repositories/user_repository.dart';
 
@@ -9,6 +10,8 @@ class UserProvider extends ChangeNotifier {
   }
 
   final UserRepository _repo;
+
+  Circle? get circle => _repo.circle;
 
   List<AppUser> getAll() => _repo.getAll();
   AppUser? getById(String id) => _repo.getById(id);

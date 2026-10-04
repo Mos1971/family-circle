@@ -27,7 +27,9 @@ class AuthProvider extends ChangeNotifier {
     required String familyName,
     required String email,
     required String password,
-    required String verificationNote,
+    String? inviteCode,
+    String? licenseCode,
+    String? circleName,
   }) async {
     _error = null;
     try {
@@ -36,7 +38,9 @@ class AuthProvider extends ChangeNotifier {
         familyName: familyName,
         email: email,
         password: password,
-        verificationNote: verificationNote,
+        inviteCode: inviteCode,
+        licenseCode: licenseCode,
+        circleName: circleName,
       );
       return true;
     } catch (e) {

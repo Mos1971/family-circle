@@ -13,7 +13,9 @@ abstract class AuthRepository {
     required String familyName,
     required String email,
     required String password,
-    required String verificationNote,
+    String? inviteCode,
+    String? licenseCode,
+    String? circleName,
   });
 
   Future<AppUser> login({required String email, required String password});

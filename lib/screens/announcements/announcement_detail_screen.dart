@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../widgets/app_back_button.dart';
+
 import '../../providers/announcement_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
@@ -23,7 +25,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
 
     if (announcement == null) {
       return Scaffold(
-        appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
+        appBar: AppBar(leading: const AppBackButton()),
         body: const EmptyState(
           emoji: '📢',
           title: 'This announcement was removed',
@@ -33,7 +35,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.pop()),
+        leading: const AppBackButton(),
         actions: isAdmin
             ? [
                 IconButton(

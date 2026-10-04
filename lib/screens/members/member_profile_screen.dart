@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../widgets/app_back_button.dart';
+
 import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/user_provider.dart';
@@ -29,13 +31,13 @@ class MemberProfileScreen extends StatelessWidget {
 
     if (member == null || !member.isApproved) {
       return Scaffold(
-        appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
+        appBar: AppBar(leading: const AppBackButton()),
         body: const EmptyState(emoji: '👤', title: 'Member not found'),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
+      appBar: AppBar(leading: const AppBackButton()),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
         children: [

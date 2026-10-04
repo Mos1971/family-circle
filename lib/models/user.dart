@@ -12,6 +12,7 @@ class AppUser {
     required this.firstName,
     required this.email,
     this.familyName = '',
+    this.circleId = '',
     this.bio = '',
     this.role = MemberRole.member,
     this.status = MemberStatus.pending,
@@ -23,6 +24,9 @@ class AppUser {
   final String id;
   final String firstName;
   final String email;
+
+  /// The private circle (customer space) this person belongs to.
+  final String circleId;
 
   /// The family this person belongs to, e.g. "The Okafors".
   final String familyName;

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../widgets/app_back_button.dart';
+
 import '../../providers/auth_provider.dart';
 import '../../providers/message_provider.dart';
 import '../../providers/user_provider.dart';
@@ -84,7 +86,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (other == null || !other.isApproved) {
       return Scaffold(
-        appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
+        appBar: AppBar(leading: const AppBackButton()),
         body: const EmptyState(emoji: '✉️', title: 'Member not available'),
       );
     }
@@ -93,7 +95,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.pop()),
+        leading: const AppBackButton(),
         title: InkWell(
           onTap: () => context.push('/members/${other.id}'),
           child: Row(

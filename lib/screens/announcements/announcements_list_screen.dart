@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../widgets/app_back_button.dart';
+
 import '../../providers/announcement_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/announcement_card.dart';
@@ -18,7 +20,7 @@ class AnnouncementsListScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.pop()),
+        leading: const AppBackButton(),
         title: const Text('Announcements'),
       ),
       floatingActionButton: isAdmin

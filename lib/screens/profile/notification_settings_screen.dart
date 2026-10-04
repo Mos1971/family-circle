@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
+import '../../widgets/app_back_button.dart';
 
 import '../../models/notification_prefs.dart';
 import '../../providers/auth_provider.dart';
@@ -23,7 +24,7 @@ class NotificationSettingsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.pop()),
+        leading: const AppBackButton(),
         title: const Text('Notifications'),
       ),
       body: ListView(
