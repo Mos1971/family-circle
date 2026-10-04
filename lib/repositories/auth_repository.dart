@@ -22,6 +22,9 @@ abstract class AuthRepository {
 
   Future<void> logout();
 
+  /// Emails a link for choosing a new password.
+  Future<void> sendPasswordReset(String email);
+
   /// Convenience for demoing the app quickly without typing credentials.
   Future<AppUser> loginAsDemo(String userId);
 }

@@ -66,6 +66,9 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> logout() => _repo.logout();
 
+  Future<void> sendPasswordReset(String email) =>
+      _repo.sendPasswordReset(email);
+
   @override
   void dispose() {
     _sub.cancel();

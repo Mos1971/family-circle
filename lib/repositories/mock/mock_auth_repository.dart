@@ -61,6 +61,9 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> sendPasswordReset(String email) async {}
+
+  @override
   Future<void> logout() async {
     _backend.currentUserId = null;
     _backend.authChanges.add(null);

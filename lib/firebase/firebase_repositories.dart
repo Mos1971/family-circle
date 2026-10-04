@@ -112,6 +112,17 @@ class FirebaseAuthRepository implements AuthRepository {
   Future<void> logout() => _b.logout();
 
   @override
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      await _b.auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      // Don't reveal whether an address has an account.
+      if (e.code == 'user-not-found') return;
+      throw Exception(_friendlyAuthError(e));
+    }
+  }
+
+  @override
   Future<AppUser> loginAsDemo(String userId) =>
       throw UnsupportedError('Demo login is only available in mock mode.');
 }

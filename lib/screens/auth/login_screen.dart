@@ -44,6 +44,59 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _forgotPassword() async {
+    final controller = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+    final auth = context.read<AuthProvider>();
+    final email = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reset your password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Enter your email and we\x27ll send you a link to choose a new password.',
+              style: TextStyle(color: AppColors.muted, fontSize: 13),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(labelText: 'Email'),
+              onSubmitted: (v) => Navigator.of(ctx).pop(v),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Send link'),
+          ),
+        ],
+      ),
+    );
+    if (email == null || email.trim().isEmpty || !mounted) return;
+    String message =
+        'If that email has an account, a reset link is on its way. '
+        'Check your spam folder too.';
+    try {
+      await auth.sendPasswordReset(email.trim());
+    } catch (e) {
+      message = e.toString().replaceFirst('Exception: ', '');
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return AuthFrame(
@@ -97,7 +150,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         : const Text('Log in'),
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 6),
+                Center(
+                  child: TextButton(
+                    onPressed: _forgotPassword,
+                    child: const Text('Forgot password?'),
+                  ),
+                ),
                 Center(
                   child: TextButton(
                     onPressed: () => context.push('/register'),
