@@ -89,10 +89,7 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     }
 
-    final thread = context.watch<MessageProvider>().getThread(
-      me.id,
-      other.id,
-    );
+    final thread = context.watch<MessageProvider>().getThread(me.id, other.id);
 
     return Scaffold(
       appBar: AppBar(
@@ -237,9 +234,7 @@ class _Bubble extends StatelessWidget {
           children: [
             Text(
               text,
-              style: TextStyle(
-                color: mine ? AppColors.onGold : AppColors.text,
-              ),
+              style: TextStyle(color: mine ? AppColors.onGold : AppColors.text),
             ),
             const SizedBox(height: 4),
             Text(

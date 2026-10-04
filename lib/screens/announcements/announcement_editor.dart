@@ -18,7 +18,9 @@ Future<void> showAnnouncementEditor(
     context: context,
     builder: (dialogContext) {
       return AlertDialog(
-        title: Text(existing == null ? 'New announcement' : 'Edit announcement'),
+        title: Text(
+          existing == null ? 'New announcement' : 'Edit announcement',
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

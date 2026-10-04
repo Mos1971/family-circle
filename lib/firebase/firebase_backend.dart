@@ -215,15 +215,14 @@ class FirebaseBackend {
           ..addAll(s.docs.map(announcementFromDoc));
         announcementChanges.add(null);
       });
-      listen(
-        db.collection('notifications').where('userId', isEqualTo: id),
-        (s) {
-          notifications
-            ..clear()
-            ..addAll(s.docs.map(notificationFromDoc));
-          notificationChanges.add(null);
-        },
-      );
+      listen(db.collection('notifications').where('userId', isEqualTo: id), (
+        s,
+      ) {
+        notifications
+          ..clear()
+          ..addAll(s.docs.map(notificationFromDoc));
+        notificationChanges.add(null);
+      });
       listen(
         db.collection('messages').where('participants', arrayContains: id),
         (s) {
@@ -233,45 +232,32 @@ class FirebaseBackend {
           messageChanges.add(null);
         },
       );
-      listen(
-        db.collection('events').where('shared', isEqualTo: true),
-        (s) {
-          _sharedEvents = s.docs.map(eventFromDoc).toList();
-          calendarChanges.add(null);
-        },
-      );
-      listen(
-        db.collection('events').where('ownerId', isEqualTo: id),
-        (s) {
-          _ownEvents = s.docs.map(eventFromDoc).toList();
-          calendarChanges.add(null);
-        },
-      );
-      listen(
-        db.collection('todoLists').where('members', arrayContains: id),
-        (s) {
-          todoLists
-            ..clear()
-            ..addAll(s.docs.map(todoFromDoc));
-          todoChanges.add(null);
-        },
-      );
+      listen(db.collection('events').where('shared', isEqualTo: true), (s) {
+        _sharedEvents = s.docs.map(eventFromDoc).toList();
+        calendarChanges.add(null);
+      });
+      listen(db.collection('events').where('ownerId', isEqualTo: id), (s) {
+        _ownEvents = s.docs.map(eventFromDoc).toList();
+        calendarChanges.add(null);
+      });
+      listen(db.collection('todoLists').where('members', arrayContains: id), (
+        s,
+      ) {
+        todoLists
+          ..clear()
+          ..addAll(s.docs.map(todoFromDoc));
+        todoChanges.add(null);
+      });
     }
 
     // Reports are admin-only, and admin status can change at runtime.
     if (me.isAdmin && _reportsSub == null) {
-      _reportsSub = db
-          .collection('reports')
-          .snapshots()
-          .listen(
-            (s) {
-              reports
-                ..clear()
-                ..addAll(s.docs.map(reportFromDoc));
-              feedChanges.add(null);
-            },
-            onError: (Object e) => debugPrint('Firestore reports: $e'),
-          );
+      _reportsSub = db.collection('reports').snapshots().listen((s) {
+        reports
+          ..clear()
+          ..addAll(s.docs.map(reportFromDoc));
+        feedChanges.add(null);
+      }, onError: (Object e) => debugPrint('Firestore reports: $e'));
     } else if (!me.isAdmin && _reportsSub != null) {
       _reportsSub!.cancel();
       _reportsSub = null;
@@ -279,10 +265,7 @@ class FirebaseBackend {
     }
   }
 
-  void listen(
-    Query<Json> query,
-    void Function(QuerySnapshot<Json>) onData,
-  ) {
+  void listen(Query<Json> query, void Function(QuerySnapshot<Json>) onData) {
     _dataSubs.add(
       query.snapshots().listen(
         onData,

@@ -189,6 +189,10 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
         showUnselectedLabels: true,
       ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.transparent,
+        constraints: BoxConstraints(maxWidth: 640),
+      ),
       popupMenuTheme: const PopupMenuThemeData(color: AppColors.surfaceHigh),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.gold,

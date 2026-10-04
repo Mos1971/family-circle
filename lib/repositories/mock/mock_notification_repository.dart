@@ -8,10 +8,11 @@ class MockNotificationRepository implements NotificationRepository {
   final MockBackend _backend;
 
   @override
-  List<AppNotification> getFor(String userId) => _backend.notifications
-      .where((n) => n.userId == userId)
-      .toList(growable: false)
-    ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  List<AppNotification> getFor(String userId) =>
+      _backend.notifications
+          .where((n) => n.userId == userId)
+          .toList(growable: false)
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   @override
   int unreadCountFor(String userId) =>

@@ -21,6 +21,7 @@ import '../screens/plan/todo_detail_screen.dart';
 import '../screens/profile/edit_profile_screen.dart';
 import '../screens/profile/notification_settings_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../widgets/app_layout.dart';
 import '../widgets/main_shell.dart';
 
 class AppRouter {
@@ -36,88 +37,104 @@ class AppRouter {
           path: '/pending',
           builder: (c, s) => const PendingApprovalScreen(),
         ),
-        GoRoute(
-          path: '/feed/post/:postId',
-          builder: (c, s) =>
-              PostDetailScreen(postId: s.pathParameters['postId']!),
-        ),
-        // '/messages/new' must be declared before '/messages/:userId'.
-        GoRoute(
-          path: '/messages/new',
-          builder: (c, s) => const MembersScreen(pickToMessage: true),
-        ),
-        GoRoute(
-          path: '/messages/:userId',
-          builder: (c, s) =>
-              ChatScreen(otherUserId: s.pathParameters['userId']!),
-        ),
-        GoRoute(
-          path: '/members/:userId',
-          builder: (c, s) =>
-              MemberProfileScreen(memberId: s.pathParameters['userId']!),
-        ),
-        GoRoute(
-          path: '/profile/edit',
-          builder: (c, s) => const EditProfileScreen(),
-        ),
-        GoRoute(
-          path: '/profile/notifications',
-          builder: (c, s) => const NotificationSettingsScreen(),
-        ),
-        GoRoute(
-          path: '/announcements',
-          builder: (c, s) => const AnnouncementsListScreen(),
-        ),
-        GoRoute(
-          path: '/announcements/:id',
-          builder: (c, s) =>
-              AnnouncementDetailScreen(announcementId: s.pathParameters['id']!),
-        ),
-        GoRoute(
-          path: '/notifications',
-          builder: (c, s) => const NotificationCenterScreen(),
-        ),
-        GoRoute(path: '/family', builder: (c, s) => const MembersScreen()),
-        GoRoute(
-          path: '/lists/:listId',
-          builder: (c, s) =>
-              TodoDetailScreen(listId: s.pathParameters['listId']!),
-        ),
-        GoRoute(path: '/admin', builder: (c, s) => const AdminDashboardScreen()),
-        StatefulShellRoute.indexedStack(
-          builder: (context, state, shell) => MainShell(shell: shell),
-          branches: [
-            StatefulShellBranch(
-              routes: [
-                GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
-              ],
+        ShellRoute(
+          builder: (context, state, child) =>
+              AppLayout(location: state.uri.path, child: child),
+          routes: [
+            GoRoute(
+              path: '/feed/post/:postId',
+              builder: (c, s) =>
+                  PostDetailScreen(postId: s.pathParameters['postId']!),
             ),
-            StatefulShellBranch(
-              routes: [
-                GoRoute(path: '/feed', builder: (c, s) => const FeedScreen()),
-              ],
+            // '/messages/new' must be declared before '/messages/:userId'.
+            GoRoute(
+              path: '/messages/new',
+              builder: (c, s) => const MembersScreen(pickToMessage: true),
             ),
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
-                  path: '/messages',
-                  builder: (c, s) => const MessagesScreen(),
+            GoRoute(
+              path: '/messages/:userId',
+              builder: (c, s) =>
+                  ChatScreen(otherUserId: s.pathParameters['userId']!),
+            ),
+            GoRoute(
+              path: '/members/:userId',
+              builder: (c, s) =>
+                  MemberProfileScreen(memberId: s.pathParameters['userId']!),
+            ),
+            GoRoute(
+              path: '/profile/edit',
+              builder: (c, s) => const EditProfileScreen(),
+            ),
+            GoRoute(
+              path: '/profile/notifications',
+              builder: (c, s) => const NotificationSettingsScreen(),
+            ),
+            GoRoute(
+              path: '/announcements',
+              builder: (c, s) => const AnnouncementsListScreen(),
+            ),
+            GoRoute(
+              path: '/announcements/:id',
+              builder: (c, s) => AnnouncementDetailScreen(
+                announcementId: s.pathParameters['id']!,
+              ),
+            ),
+            GoRoute(
+              path: '/notifications',
+              builder: (c, s) => const NotificationCenterScreen(),
+            ),
+            GoRoute(path: '/family', builder: (c, s) => const MembersScreen()),
+            GoRoute(
+              path: '/lists/:listId',
+              builder: (c, s) =>
+                  TodoDetailScreen(listId: s.pathParameters['listId']!),
+            ),
+            GoRoute(
+              path: '/admin',
+              builder: (c, s) => const AdminDashboardScreen(),
+            ),
+            StatefulShellRoute.indexedStack(
+              builder: (context, state, shell) => MainShell(shell: shell),
+              branches: [
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(
+                      path: '/home',
+                      builder: (c, s) => const HomeScreen(),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
-                  path: '/plan',
-                  builder: (c, s) => const PlanScreen(),
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(
+                      path: '/feed',
+                      builder: (c, s) => const FeedScreen(),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
-                  path: '/profile',
-                  builder: (c, s) => const ProfileScreen(),
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(
+                      path: '/messages',
+                      builder: (c, s) => const MessagesScreen(),
+                    ),
+                  ],
+                ),
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(
+                      path: '/plan',
+                      builder: (c, s) => const PlanScreen(),
+                    ),
+                  ],
+                ),
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(
+                      path: '/profile',
+                      builder: (c, s) => const ProfileScreen(),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -8,6 +8,7 @@ import '../../providers/plan_providers.dart';
 import '../../providers/user_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/time_format.dart';
+import '../../widgets/app_layout.dart';
 
 enum _Mode { family, mine }
 
@@ -48,6 +49,92 @@ class _CalendarViewState extends State<CalendarView> {
         : [...mine, if (cal.overlayFamily) ...shared];
     final dayEvents = cal.onDay(visible, _selected);
 
+    final controls = <Widget>[
+      SegmentedButton<_Mode>(
+        segments: const [
+          ButtonSegment(
+            value: _Mode.family,
+            label: Text('Family calendar'),
+            icon: Icon(Icons.groups_outlined),
+          ),
+          ButtonSegment(
+            value: _Mode.mine,
+            label: Text('My calendar'),
+            icon: Icon(Icons.lock_outline),
+          ),
+        ],
+        selected: {_mode},
+        showSelectedIcon: false,
+        style: SegmentedButton.styleFrom(
+          selectedBackgroundColor: AppColors.gold,
+          selectedForegroundColor: AppColors.onGold,
+          foregroundColor: AppColors.text,
+          side: const BorderSide(color: AppColors.border),
+        ),
+        onSelectionChanged: (s) => setState(() => _mode = s.first),
+      ),
+      if (_mode == _Mode.mine) ...[
+        const SizedBox(height: 4),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          title: const Text('Show family events here'),
+          subtitle: const Text(
+            'Only you can see your calendar. Family events are shown '
+            'in gold.',
+            style: TextStyle(fontSize: 12, color: AppColors.muted),
+          ),
+          value: cal.overlayFamily,
+          onChanged: cal.setOverlayFamily,
+        ),
+      ],
+      const SizedBox(height: 8),
+    ];
+
+    final calendar = <Widget>[
+      _MonthHeader(
+        month: _month,
+        onPrev: () => _shiftMonth(-1),
+        onNext: () => _shiftMonth(1),
+        onToday: () {
+          final now = DateTime.now();
+          setState(() {
+            _month = DateTime(now.year, now.month);
+            _selected = DateTime(now.year, now.month, now.day);
+          });
+        },
+      ),
+      _MonthGrid(
+        month: _month,
+        selected: _selected,
+        sharedEvents: _mode == _Mode.family
+            ? shared
+            : (cal.overlayFamily ? shared : const []),
+        privateEvents: _mode == _Mode.mine ? mine : const [],
+        onSelect: (d) => setState(() => _selected = d),
+      ),
+    ];
+
+    final agenda = <Widget>[
+      Text(
+        DateFormat('EEEE d MMMM').format(_selected),
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
+      const SizedBox(height: 8),
+      if (dayEvents.isEmpty)
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: Text(
+            'Nothing planned.',
+            style: TextStyle(color: AppColors.muted),
+          ),
+        )
+      else
+        ...dayEvents.map((e) => _EventTile(event: e)),
+    ];
+
+    final wide = isDesktopWidth(context);
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton.extended(
@@ -59,87 +146,39 @@ class _CalendarViewState extends State<CalendarView> {
         icon: const Icon(Icons.add),
         label: Text(_mode == _Mode.family ? 'Add to family' : 'Add to mine'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-        children: [
-          SegmentedButton<_Mode>(
-            segments: const [
-              ButtonSegment(
-                value: _Mode.family,
-                label: Text('Family calendar'),
-                icon: Icon(Icons.groups_outlined),
-              ),
-              ButtonSegment(
-                value: _Mode.mine,
-                label: Text('My calendar'),
-                icon: Icon(Icons.lock_outline),
-              ),
-            ],
-            selected: {_mode},
-            showSelectedIcon: false,
-            style: SegmentedButton.styleFrom(
-              selectedBackgroundColor: AppColors.gold,
-              selectedForegroundColor: AppColors.onGold,
-              foregroundColor: AppColors.text,
-              side: const BorderSide(color: AppColors.border),
-            ),
-            onSelectionChanged: (s) => setState(() => _mode = s.first),
-          ),
-          if (_mode == _Mode.mine) ...[
-            const SizedBox(height: 4),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              title: const Text('Show family events here'),
-              subtitle: const Text(
-                'Only you can see your calendar. Family events are shown '
-                'in gold.',
-                style: TextStyle(fontSize: 12, color: AppColors.muted),
-              ),
-              value: cal.overlayFamily,
-              onChanged: cal.setOverlayFamily,
-            ),
-          ],
-          const SizedBox(height: 8),
-          _MonthHeader(
-            month: _month,
-            onPrev: () => _shiftMonth(-1),
-            onNext: () => _shiftMonth(1),
-            onToday: () {
-              final now = DateTime.now();
-              setState(() {
-                _month = DateTime(now.year, now.month);
-                _selected = DateTime(now.year, now.month, now.day);
-              });
-            },
-          ),
-          _MonthGrid(
-            month: _month,
-            selected: _selected,
-            sharedEvents: _mode == _Mode.family
-                ? shared
-                : (cal.overlayFamily ? shared : const []),
-            privateEvents: _mode == _Mode.mine ? mine : const [],
-            onSelect: (d) => setState(() => _selected = d),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            DateFormat('EEEE d MMMM').format(_selected),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          if (dayEvents.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                'Nothing planned.',
-                style: TextStyle(color: AppColors.muted),
+      body: wide
+          ? SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(32, 16, 32, 100),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ...controls,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 6, child: Column(children: calendar)),
+                      const SizedBox(width: 32),
+                      Expanded(
+                        flex: 4,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [const SizedBox(height: 12), ...agenda],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             )
-          else
-            ...dayEvents.map((e) => _EventTile(event: e)),
-        ],
-      ),
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+              children: [
+                ...controls,
+                ...calendar,
+                const SizedBox(height: 18),
+                ...agenda,
+              ],
+            ),
     );
   }
 }
@@ -194,7 +233,8 @@ class _MonthGrid extends StatelessWidget {
   final ValueChanged<DateTime> onSelect;
 
   bool _has(List<CalendarEvent> list, DateTime d) => list.any(
-    (e) => e.date.year == d.year && e.date.month == d.month && e.date.day == d.day,
+    (e) =>
+        e.date.year == d.year && e.date.month == d.month && e.date.day == d.day,
   );
 
   @override
@@ -231,7 +271,9 @@ class _MonthGrid extends StatelessWidget {
           Row(
             children: [
               for (var c = 0; c < 7; c++)
-                Expanded(child: _cell(r * 7 + c - lead + 1, daysInMonth, today)),
+                Expanded(
+                  child: _cell(r * 7 + c - lead + 1, daysInMonth, today),
+                ),
             ],
           ),
       ],
@@ -255,9 +297,7 @@ class _MonthGrid extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSel ? AppColors.gold : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
-          border: isToday && !isSel
-              ? Border.all(color: AppColors.gold)
-              : null,
+          border: isToday && !isSel ? Border.all(color: AppColors.gold) : null,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -275,8 +315,7 @@ class _MonthGrid extends StatelessWidget {
               children: [
                 if (hasShared) _dot(isSel ? AppColors.onGold : AppColors.gold),
                 if (hasShared && hasPrivate) const SizedBox(width: 3),
-                if (hasPrivate)
-                  _dot(isSel ? AppColors.onGold : AppColors.text),
+                if (hasPrivate) _dot(isSel ? AppColors.onGold : AppColors.text),
                 if (!hasShared && !hasPrivate) const SizedBox(height: 5),
               ],
             ),
@@ -389,13 +428,17 @@ Future<void> showEventEditor(
                   controller: title,
                   autofocus: true,
                   textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(hintText: 'What\'s happening?'),
+                  decoration: const InputDecoration(
+                    hintText: 'What\'s happening?',
+                  ),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: notes,
                   maxLines: 2,
-                  decoration: const InputDecoration(hintText: 'Notes (optional)'),
+                  decoration: const InputDecoration(
+                    hintText: 'Notes (optional)',
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -428,7 +471,8 @@ Future<void> showEventEditor(
                           final t = await showTimePicker(
                             context: ctx,
                             initialTime:
-                                pickedTime ?? const TimeOfDay(hour: 12, minute: 0),
+                                pickedTime ??
+                                const TimeOfDay(hour: 12, minute: 0),
                           );
                           if (t != null) setSheet(() => pickedTime = t);
                         },
@@ -451,7 +495,10 @@ Future<void> showEventEditor(
                     isShared
                         ? 'Everyone in Family Circle can see this.'
                         : 'Only you can see this.',
-                    style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.muted,
+                    ),
                   ),
                   value: isShared,
                   onChanged: (v) => setSheet(() => isShared = v),
@@ -506,9 +553,9 @@ Future<void> showEventDetails(BuildContext context, String eventId) {
         final owner = ctx.read<UserProvider>().getById(e.ownerId);
 
         void close() => Navigator.of(sheetContext).pop();
-        void toast(String msg) => ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(msg)));
+        void toast(String msg) =>
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(msg)));
 
         return Container(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
@@ -540,11 +587,11 @@ Future<void> showEventDetails(BuildContext context, String eventId) {
               const SizedBox(height: 18),
               if (e.shared && !mineOwned)
                 OutlinedButton.icon(
-                  icon: Icon(alreadyCopied ? Icons.check : Icons.event_available),
+                  icon: Icon(
+                    alreadyCopied ? Icons.check : Icons.event_available,
+                  ),
                   label: Text(
-                    alreadyCopied
-                        ? 'On my calendar'
-                        : 'Add to my calendar',
+                    alreadyCopied ? 'On my calendar' : 'Add to my calendar',
                   ),
                   onPressed: alreadyCopied
                       ? null
@@ -576,7 +623,9 @@ Future<void> showEventDetails(BuildContext context, String eventId) {
                 ),
               if (mineOwned || (e.shared && me.isAdmin))
                 TextButton.icon(
-                  style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                  ),
                   icon: const Icon(Icons.delete_outline),
                   label: const Text('Delete event'),
                   onPressed: () {

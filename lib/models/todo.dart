@@ -25,7 +25,8 @@ class TodoList {
   final List<TodoItem> items;
   final Set<String> sharedWith;
 
-  bool canView(String userId) => ownerId == userId || sharedWith.contains(userId);
+  bool canView(String userId) =>
+      ownerId == userId || sharedWith.contains(userId);
 
   int get doneCount => items.where((i) => i.done).length;
 }

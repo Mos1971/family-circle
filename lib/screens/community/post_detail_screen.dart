@@ -64,7 +64,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     if (post == null) {
       return Scaffold(
         appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
-        body: const EmptyState(emoji: '🙈', title: 'This post is no longer available'),
+        body: const EmptyState(
+          emoji: '🙈',
+          title: 'This post is no longer available',
+        ),
       );
     }
 
@@ -257,13 +260,18 @@ class _CommentTile extends StatelessWidget {
                             );
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Comment reported to the admins.'),
+                                content: Text(
+                                  'Comment reported to the admins.',
+                                ),
                               ),
                             );
                           },
                           child: const Text(
                             'Report',
-                            style: TextStyle(fontSize: 11, color: AppColors.muted),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.muted,
+                            ),
                           ),
                         ),
                       ],

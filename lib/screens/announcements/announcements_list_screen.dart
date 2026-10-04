@@ -29,10 +29,7 @@ class AnnouncementsListScreen extends StatelessWidget {
             )
           : null,
       body: announcements.isEmpty
-          ? const EmptyState(
-              emoji: '📢',
-              title: 'No announcements yet',
-            )
+          ? const EmptyState(emoji: '📢', title: 'No announcements yet')
           : ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
               itemCount: announcements.length,

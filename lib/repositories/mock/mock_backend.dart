@@ -224,21 +224,24 @@ class MockBackend {
       Post(
         id: newId(),
         authorId: sarah.id,
-        text: 'Made far too many cupcakes for the school fair. Anyone '
+        text:
+            'Made far too many cupcakes for the school fair. Anyone '
             'want some? 🧁',
         createdAt: now.subtract(const Duration(hours: 3)),
       ),
       Post(
         id: newId(),
         authorId: maya.id,
-        text: 'Hello Circle! We\'re the Patels — so glad to be part of '
+        text:
+            'Hello Circle! We\'re the Patels — so glad to be part of '
             'this. Any tips for good family days out nearby?',
         createdAt: now.subtract(const Duration(hours: 20)),
       ),
       Post(
         id: newId(),
         authorId: craig.id,
-        text: 'Our tomatoes finally came in 🍅 Pop round if you want a '
+        text:
+            'Our tomatoes finally came in 🍅 Pop round if you want a '
             'bag — plenty to go around.',
         createdAt: now.subtract(const Duration(days: 1, hours: 4)),
       ),
@@ -279,7 +282,8 @@ class MockBackend {
         id: newId(),
         senderId: maya.id,
         recipientId: sarah.id,
-        text: 'Hi Sarah! I saw your cupcake post — are the school fair '
+        text:
+            'Hi Sarah! I saw your cupcake post — are the school fair '
             'details anywhere?',
         createdAt: now.subtract(const Duration(minutes: 35)),
       ),
@@ -287,7 +291,8 @@ class MockBackend {
         id: newId(),
         senderId: admin.id,
         recipientId: sarah.id,
-        text: 'Thanks for helping organise the picnic! Let me know if you '
+        text:
+            'Thanks for helping organise the picnic! Let me know if you '
             'need anything from me.',
         createdAt: now.subtract(const Duration(days: 1)),
       ),

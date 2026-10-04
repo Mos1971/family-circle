@@ -9,11 +9,11 @@ class MockAnnouncementRepository implements AnnouncementRepository {
   final MockBackend _backend;
 
   @override
-  List<Announcement> getAll() => _backend.announcements.toList(growable: false)
-    ..sort((a, b) {
-      if (a.pinned != b.pinned) return a.pinned ? -1 : 1;
-      return b.createdAt.compareTo(a.createdAt);
-    });
+  List<Announcement> getAll() =>
+      _backend.announcements.toList(growable: false)..sort((a, b) {
+        if (a.pinned != b.pinned) return a.pinned ? -1 : 1;
+        return b.createdAt.compareTo(a.createdAt);
+      });
 
   @override
   Announcement create({

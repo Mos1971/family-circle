@@ -49,7 +49,10 @@ class AdminDashboardScreen extends StatelessWidget {
             crossAxisSpacing: 10,
             childAspectRatio: 1.8,
             children: [
-              _StatCard(label: 'Members', value: '${stats.approvedMemberCount}'),
+              _StatCard(
+                label: 'Members',
+                value: '${stats.approvedMemberCount}',
+              ),
               _StatCard(
                 label: 'Pending approval',
                 value: '${stats.pendingMemberCount}',
@@ -68,36 +71,47 @@ class AdminDashboardScreen extends StatelessWidget {
           if (pending.isEmpty)
             const Padding(
               padding: EdgeInsets.only(bottom: 8),
-              child: Text('No pending requests.', style: TextStyle(color: AppColors.muted)),
+              child: Text(
+                'No pending requests.',
+                style: TextStyle(color: AppColors.muted),
+              ),
             )
           else
-            ...pending.map((u) => Card(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  child: ListTile(
-                    leading: MemberAvatar(user: u, radius: 18),
-                    title: Text(u.firstName),
-                    subtitle: Text(u.email, style: const TextStyle(fontSize: 12)),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.check_circle, color: AppColors.success),
-                          onPressed: () => users.approve(u.id),
+            ...pending.map(
+              (u) => Card(
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ListTile(
+                  leading: MemberAvatar(user: u, radius: 18),
+                  title: Text(u.firstName),
+                  subtitle: Text(u.email, style: const TextStyle(fontSize: 12)),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.check_circle,
+                          color: AppColors.success,
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.cancel, color: AppColors.danger),
-                          onPressed: () => users.reject(u.id),
-                        ),
-                      ],
-                    ),
+                        onPressed: () => users.approve(u.id),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.cancel, color: AppColors.danger),
+                        onPressed: () => users.reject(u.id),
+                      ),
+                    ],
                   ),
-                )),
+                ),
+              ),
+            ),
           const SizedBox(height: 20),
           SectionHeader(title: 'Reported content (${reports.length})'),
           if (reports.isEmpty)
             const Padding(
               padding: EdgeInsets.only(bottom: 8),
-              child: Text('Nothing to review right now.', style: TextStyle(color: AppColors.muted)),
+              child: Text(
+                'Nothing to review right now.',
+                style: TextStyle(color: AppColors.muted),
+              ),
             )
           else
             ...reports.map((r) => _ReportTile(report: r)),
@@ -117,24 +131,28 @@ class AdminDashboardScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 12, color: AppColors.muted),
               ),
             ),
-          ...admins.map((u) => Card(
-                margin: const EdgeInsets.only(bottom: 10),
-                child: ListTile(
-                  leading: MemberAvatar(user: u, radius: 18),
-                  title: Text(u.id == me?.id ? '${u.firstName} (You)' : u.firstName),
-                  subtitle: Text(u.email, style: const TextStyle(fontSize: 12)),
-                  trailing: admins.length > 1
-                      ? IconButton(
-                          icon: const Icon(
-                            Icons.remove_circle_outline,
-                            color: AppColors.gold,
-                          ),
-                          tooltip: 'Remove admin access',
-                          onPressed: () => users.demoteToMember(u.id),
-                        )
-                      : null,
+          ...admins.map(
+            (u) => Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: ListTile(
+                leading: MemberAvatar(user: u, radius: 18),
+                title: Text(
+                  u.id == me?.id ? '${u.firstName} (You)' : u.firstName,
                 ),
-              )),
+                subtitle: Text(u.email, style: const TextStyle(fontSize: 12)),
+                trailing: admins.length > 1
+                    ? IconButton(
+                        icon: const Icon(
+                          Icons.remove_circle_outline,
+                          color: AppColors.gold,
+                        ),
+                        tooltip: 'Remove admin access',
+                        onPressed: () => users.demoteToMember(u.id),
+                      )
+                    : null,
+              ),
+            ),
+          ),
           const SizedBox(height: 20),
           SectionHeader(title: 'Manage the circle'),
           Card(
@@ -173,7 +191,9 @@ class AdminDashboardScreen extends StatelessWidget {
                 leading: MemberAvatar(user: u, radius: 18),
                 title: Text(u.firstName),
                 subtitle: Text(
-                  u.familyName.isEmpty ? u.email : '${u.familyName} · ${u.email}',
+                  u.familyName.isEmpty
+                      ? u.email
+                      : '${u.familyName} · ${u.email}',
                   style: const TextStyle(fontSize: 12),
                 ),
                 trailing: IconButton(
@@ -194,7 +214,11 @@ class AdminDashboardScreen extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value, this.highlight = false});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    this.highlight = false,
+  });
 
   final String label;
   final String value;
@@ -205,7 +229,9 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: highlight ? AppColors.gold.withValues(alpha: 0.1) : AppColors.surface,
+        color: highlight
+            ? AppColors.gold.withValues(alpha: 0.1)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: highlight ? AppColors.gold : AppColors.border,
@@ -219,7 +245,10 @@ class _StatCard extends StatelessWidget {
             value,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),
-          Text(label, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: AppColors.muted),
+          ),
         ],
       ),
     );
@@ -234,7 +263,9 @@ class _ReportTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final feed = context.read<FeedProvider>();
-    final label = report.contentType == ReportedContentType.post ? 'Post' : 'Comment';
+    final label = report.contentType == ReportedContentType.post
+        ? 'Post'
+        : 'Comment';
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: Padding(
@@ -245,22 +276,33 @@ class _ReportTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('$label reported', style: const TextStyle(fontWeight: FontWeight.w700)),
+                  Text(
+                    '$label reported',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     'Reported ${timeAgo(report.createdAt)}',
-                    style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.muted,
+                    ),
                   ),
                 ],
               ),
             ),
             TextButton(
-              onPressed: () => feed.resolveReport(report.id, removeContent: false),
+              onPressed: () =>
+                  feed.resolveReport(report.id, removeContent: false),
               child: const Text('Dismiss'),
             ),
             ElevatedButton(
-              onPressed: () => feed.resolveReport(report.id, removeContent: true),
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
+              onPressed: () =>
+                  feed.resolveReport(report.id, removeContent: true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Remove'),
             ),
           ],

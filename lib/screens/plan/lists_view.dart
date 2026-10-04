@@ -90,7 +90,9 @@ class ListsView extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   l.title,
-                                  style: Theme.of(context).textTheme.titleMedium,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium,
                                 ),
                               ),
                               Icon(

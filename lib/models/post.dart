@@ -12,7 +12,8 @@ class Post {
     Map<ReactionType, Set<String>>? reactions,
     this.reportedCount = 0,
     this.hidden = false,
-  }) : reactions = reactions ?? {for (final r in ReactionType.values) r: <String>{}};
+  }) : reactions =
+           reactions ?? {for (final r in ReactionType.values) r: <String>{}};
 
   final String id;
   final String authorId;

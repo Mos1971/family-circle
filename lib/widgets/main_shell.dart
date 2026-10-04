@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/message_provider.dart';
 import '../theme/app_theme.dart';
+import 'app_layout.dart';
 
 class MainShell extends StatelessWidget {
   const MainShell({super.key, required this.shell});
@@ -17,6 +18,9 @@ class MainShell extends StatelessWidget {
     final unreadMessages = userId == null
         ? 0
         : context.watch<MessageProvider>().unreadCountFor(userId);
+
+    // On wide screens the sidebar (see AppLayout) replaces the bottom bar.
+    if (isDesktopWidth(context)) return shell;
 
     return Scaffold(
       body: shell,
@@ -64,9 +68,7 @@ class _MessagesIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = Icon(
-      filled ? Icons.chat_bubble : Icons.chat_bubble_outline,
-    );
+    final icon = Icon(filled ? Icons.chat_bubble : Icons.chat_bubble_outline);
     if (unread == 0) return icon;
     return Badge(
       backgroundColor: AppColors.gold,

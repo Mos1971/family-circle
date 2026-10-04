@@ -17,7 +17,9 @@ class NotificationCenterScreen extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final notifications = context.watch<NotificationProvider>();
     final userId = auth.currentUser?.id;
-    final items = userId == null ? <AppNotification>[] : notifications.getFor(userId);
+    final items = userId == null
+        ? <AppNotification>[]
+        : notifications.getFor(userId);
 
     return Scaffold(
       appBar: AppBar(
@@ -60,7 +62,10 @@ class NotificationCenterScreen extends StatelessWidget {
                   subtitle: Text(n.body),
                   trailing: Text(
                     timeAgo(n.createdAt),
-                    style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.muted,
+                    ),
                   ),
                   isThreeLine: n.body.length > 40,
                 );

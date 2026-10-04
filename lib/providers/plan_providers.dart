@@ -35,9 +35,8 @@ class CalendarProvider extends ChangeNotifier {
         )
         .toList();
     list.sort(
-      (a, b) => (a.minutesFromMidnight ?? -1).compareTo(
-        b.minutesFromMidnight ?? -1,
-      ),
+      (a, b) =>
+          (a.minutesFromMidnight ?? -1).compareTo(b.minutesFromMidnight ?? -1),
     );
     return list;
   }

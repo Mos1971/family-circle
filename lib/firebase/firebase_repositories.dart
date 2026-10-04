@@ -205,8 +205,9 @@ class FirebaseFeedRepository implements FeedRepository {
   final FirebaseBackend _b;
 
   @override
-  List<Post> getPosts() => _b.posts.where((p) => !p.hidden).toList()
-    ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  List<Post> getPosts() =>
+      _b.posts.where((p) => !p.hidden).toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   @override
   Post? getPost(String id) {
@@ -270,10 +271,7 @@ class FirebaseFeedRepository implements FeedRepository {
             ? FieldValue.arrayUnion([userId])
             : FieldValue.arrayRemove([userId]),
     };
-    _write(
-      _b.db.collection('posts').doc(postId).update(update),
-      'reaction',
-    );
+    _write(_b.db.collection('posts').doc(postId).update(update), 'reaction');
     if (!already && post.authorId != userId) {
       final author = _b.userById(post.authorId);
       if (author != null && _b.prefsFor(author.id).reactionsOn) {
@@ -838,8 +836,10 @@ class FirebaseTodoRepository implements TodoRepository {
   });
 
   @override
-  void removeItem(String listId, String itemId) =>
-      _editItems(listId, (items) => items.removeWhere((i) => i['id'] == itemId));
+  void removeItem(String listId, String itemId) => _editItems(
+    listId,
+    (items) => items.removeWhere((i) => i['id'] == itemId),
+  );
 
   @override
   void setSharedWith(String listId, String ownerId, Set<String> userIds) {

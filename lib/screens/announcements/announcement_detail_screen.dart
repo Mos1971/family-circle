@@ -18,14 +18,16 @@ class AnnouncementDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final announcements = context.watch<AnnouncementProvider>();
     final isAdmin = context.watch<AuthProvider>().isAdmin;
-    final matches =
-        announcements.getAll().where((a) => a.id == announcementId);
+    final matches = announcements.getAll().where((a) => a.id == announcementId);
     final announcement = matches.isEmpty ? null : matches.first;
 
     if (announcement == null) {
       return Scaffold(
         appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
-        body: const EmptyState(emoji: '📢', title: 'This announcement was removed'),
+        body: const EmptyState(
+          emoji: '📢',
+          title: 'This announcement was removed',
+        ),
       );
     }
 
@@ -79,7 +81,10 @@ class AnnouncementDetailScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Text(announcement.title, style: Theme.of(context).textTheme.headlineMedium),
+          Text(
+            announcement.title,
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
           const SizedBox(height: 6),
           Text(
             timeAgo(announcement.createdAt),

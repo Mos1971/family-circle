@@ -7,6 +7,8 @@ import '../../app_mode.dart';
 import '../../repositories/mock/mock_backend.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_wordmark.dart';
+import '../../widgets/app_layout.dart';
+import '../../widgets/auth_frame.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,70 +39,78 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _submitting = false);
     if (!ok) {
       final error = context.read<AuthProvider>().error;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error ?? 'Could not log in.')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error ?? 'Could not log in.')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const AppWordmark(fontSize: 44),
-              const SizedBox(height: 6),
-              const Text(
-                'Your family. Your circle.',
-                style: TextStyle(color: AppColors.muted, fontSize: 15),
-              ),
-              const SizedBox(height: 36),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  hintText: 'you@example.com',
+    return AuthFrame(
+      child: Scaffold(
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              24,
+              isDesktopWidth(context) ? 96 : 40,
+              24,
+              24,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const AppWordmark(fontSize: 44),
+                const SizedBox(height: 6),
+                const Text(
+                  'Your family. Your circle.',
+                  style: TextStyle(color: AppColors.muted, fontSize: 15),
                 ),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password'),
-              ),
-              const SizedBox(height: 22),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submitting ? null : _submit,
-                  child: _submitting
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.onGold,
-                          ),
-                        )
-                      : const Text('Log in'),
+                const SizedBox(height: 36),
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    hintText: 'you@example.com',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 14),
-              Center(
-                child: TextButton(
-                  onPressed: () => context.push('/register'),
-                  child: const Text('New here? Request to join your family circle'),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Password'),
                 ),
-              ),
-              const SizedBox(height: 32),
-              if (context.read<AppMode>().isMock) const _DemoAccounts(),
-              const SizedBox(height: 8),
-            ],
+                const SizedBox(height: 22),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _submitting ? null : _submit,
+                    child: _submitting
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.onGold,
+                            ),
+                          )
+                        : const Text('Log in'),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Center(
+                  child: TextButton(
+                    onPressed: () => context.push('/register'),
+                    child: const Text(
+                      'New here? Request to join your family circle',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                if (context.read<AppMode>().isMock) const _DemoAccounts(),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         ),
       ),

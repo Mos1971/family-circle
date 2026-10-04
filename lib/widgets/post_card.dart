@@ -64,7 +64,9 @@ class PostCard extends StatelessWidget {
                       } else if (v == 'report') {
                         feed.reportPost(post.id, me.id);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Post reported to the admins.')),
+                          const SnackBar(
+                            content: Text('Post reported to the admins.'),
+                          ),
                         );
                       }
                     },
@@ -91,7 +93,9 @@ class PostCard extends StatelessWidget {
                     onPressed: () {
                       feed.reportPost(post.id, me.id);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Post reported to the admins.')),
+                        const SnackBar(
+                          content: Text('Post reported to the admins.'),
+                        ),
                       );
                     },
                   ),
@@ -110,15 +114,17 @@ class PostCard extends StatelessWidget {
                 ),
                 child: Text(
                   post.text,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(context).textTheme.bodyLarge
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
               )
             else
               Padding(
                 padding: const EdgeInsets.only(top: 10),
-                child: Text(post.text, style: Theme.of(context).textTheme.bodyLarge),
+                child: Text(
+                  post.text,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
               ),
             const SizedBox(height: 14),
             Row(
@@ -137,7 +143,9 @@ class PostCard extends StatelessWidget {
                   TextButton.icon(
                     onPressed: () => context.push('/feed/post/${post.id}'),
                     icon: const Icon(Icons.mode_comment_outlined, size: 18),
-                    label: Text(commentCount == 0 ? 'Comment' : '$commentCount'),
+                    label: Text(
+                      commentCount == 0 ? 'Comment' : '$commentCount',
+                    ),
                   ),
               ],
             ),

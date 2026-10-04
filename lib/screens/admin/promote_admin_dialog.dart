@@ -35,9 +35,14 @@ Future<void> showPromoteAdminDialog(BuildContext context) {
                       contentPadding: EdgeInsets.zero,
                       leading: MemberAvatar(user: u, radius: 18),
                       title: Text(u.firstName),
-                      subtitle: Text(u.email, style: const TextStyle(fontSize: 12)),
+                      subtitle: Text(
+                        u.email,
+                        style: const TextStyle(fontSize: 12),
+                      ),
                       onTap: () {
-                        final ok = context.read<UserProvider>().promoteToAdmin(u.id);
+                        final ok = context.read<UserProvider>().promoteToAdmin(
+                          u.id,
+                        );
                         Navigator.of(dialogContext).pop();
                         _showResult(context, ok, u);
                       },

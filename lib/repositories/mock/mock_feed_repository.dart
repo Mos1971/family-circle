@@ -12,10 +12,9 @@ class MockFeedRepository implements FeedRepository {
   final MockBackend _backend;
 
   @override
-  List<Post> getPosts() => _backend.posts
-      .where((p) => !p.hidden)
-      .toList(growable: false)
-    ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  List<Post> getPosts() =>
+      _backend.posts.where((p) => !p.hidden).toList(growable: false)
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   @override
   Post? getPost(String id) {
@@ -88,10 +87,9 @@ class MockFeedRepository implements FeedRepository {
   }
 
   @override
-  List<Comment> getComments(String postId) => _backend.comments
-      .where((c) => c.postId == postId)
-      .toList(growable: false)
-    ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  List<Comment> getComments(String postId) =>
+      _backend.comments.where((c) => c.postId == postId).toList(growable: false)
+        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
   @override
   Comment addComment({
@@ -174,10 +172,9 @@ class MockFeedRepository implements FeedRepository {
   }
 
   @override
-  List<ContentReport> getOpenReports() => _backend.reports
-      .where((r) => !r.resolved)
-      .toList(growable: false)
-    ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  List<ContentReport> getOpenReports() =>
+      _backend.reports.where((r) => !r.resolved).toList(growable: false)
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   @override
   void resolveReport(String reportId, {required bool removeContent}) {

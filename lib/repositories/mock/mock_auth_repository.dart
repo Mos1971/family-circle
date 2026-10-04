@@ -43,7 +43,10 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser> login({required String email, required String password}) async {
+  Future<AppUser> login({
+    required String email,
+    required String password,
+  }) async {
     final match = _backend.users
         .where((u) => u.email.toLowerCase() == email.toLowerCase())
         .toList();

@@ -23,7 +23,10 @@ class ProfileScreen extends StatelessWidget {
 
     if (me == null) return const SizedBox.shrink();
 
-    final myPostCount = feed.getPosts().where((p) => p.authorId == me.id).length;
+    final myPostCount = feed
+        .getPosts()
+        .where((p) => p.authorId == me.id)
+        .length;
     final familyCount = me.familyName.isEmpty
         ? 1
         : users
@@ -88,13 +91,12 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 20),
           Row(
             children: [
-              Expanded(child: _StatTile(label: 'Posts', value: '$myPostCount')),
+              Expanded(
+                child: _StatTile(label: 'Posts', value: '$myPostCount'),
+              ),
               const SizedBox(width: 10),
               Expanded(
-                child: _StatTile(
-                  label: 'In my family',
-                  value: '$familyCount',
-                ),
+                child: _StatTile(label: 'In my family', value: '$familyCount'),
               ),
             ],
           ),

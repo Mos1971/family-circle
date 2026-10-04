@@ -123,10 +123,8 @@ class MockCalendarRepository implements CalendarRepository {
   }
 
   @override
-  bool isCopiedToPrivate(String sharedEventId, String userId) =>
-      _backend.events.any(
-        (e) => e.copiedFromId == sharedEventId && e.ownerId == userId,
-      );
+  bool isCopiedToPrivate(String sharedEventId, String userId) => _backend.events
+      .any((e) => e.copiedFromId == sharedEventId && e.ownerId == userId);
 
   @override
   Stream<void> get changes => _backend.calendarChanges.stream;

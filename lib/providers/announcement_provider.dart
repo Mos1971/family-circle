@@ -17,7 +17,12 @@ class AnnouncementProvider extends ChangeNotifier {
     required String body,
     required String authorId,
     bool pinned = false,
-  }) => _repo.create(title: title, body: body, authorId: authorId, pinned: pinned);
+  }) => _repo.create(
+    title: title,
+    body: body,
+    authorId: authorId,
+    pinned: pinned,
+  );
 
   void update(String id, {String? title, String? body}) =>
       _repo.update(id, title: title, body: body);

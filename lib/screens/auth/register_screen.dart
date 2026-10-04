@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_wordmark.dart';
+import '../../widgets/app_layout.dart';
+import '../../widgets/auth_frame.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -61,7 +63,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _submitting = false);
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Something went wrong, please try again.')),
+        const SnackBar(
+          content: Text('Something went wrong, please try again.'),
+        ),
       );
     }
     // On success, the router redirect takes the new pending user to /pending.
@@ -69,109 +73,116 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const AppWordmark(fontSize: 30),
-              const SizedBox(height: 6),
-              const Text(
-                'Request to join your family circle',
-                style: TextStyle(color: AppColors.muted, fontSize: 14),
-              ),
-              const SizedBox(height: 28),
-              TextField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'First name'),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _familyController,
-                decoration: const InputDecoration(
-                  labelText: 'Family name',
-                  hintText: 'e.g. The Okafors',
+    return AuthFrame(
+      child: Scaffold(
+        appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              24,
+              isDesktopWidth(context) ? 40 : 0,
+              24,
+              24,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const AppWordmark(fontSize: 30),
+                const SizedBox(height: 6),
+                const Text(
+                  'Request to join your family circle',
+                  style: TextStyle(color: AppColors.muted, fontSize: 14),
                 ),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email'),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password'),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _verificationController,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Who invited you? (optional)',
-                  hintText: 'e.g. the family member who told you about Family Circle',
+                const SizedBox(height: 28),
+                TextField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'First name'),
                 ),
-              ),
-              const SizedBox(height: 18),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _familyController,
+                  decoration: const InputDecoration(
+                    labelText: 'Family name',
+                    hintText: 'e.g. The Okafors',
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'House rules',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Family Circle is a private space for families. Be kind, '
-                      'keep it friendly and family-safe, and respect other '
-                      'people\'s privacy — what\'s shared here stays here.',
-                      style: TextStyle(color: AppColors.muted, fontSize: 13),
-                    ),
-                    const SizedBox(height: 10),
-                    CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      controlAffinity: ListTileControlAffinity.leading,
-                      value: _agreedToGuidelines,
-                      onChanged: (v) =>
-                          setState(() => _agreedToGuidelines = v ?? false),
-                      title: const Text(
-                        'I agree to the house rules',
-                        style: TextStyle(fontSize: 13),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Password'),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _verificationController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Who invited you? (optional)',
+                    hintText: 'e.g. the family member who told you about Family Circle',
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'House rules',
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Family Circle is a private space for families. Be kind, '
+                        'keep it friendly and family-safe, and respect other '
+                        'people\'s privacy — what\'s shared here stays here.',
+                        style: TextStyle(color: AppColors.muted, fontSize: 13),
+                      ),
+                      const SizedBox(height: 10),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        value: _agreedToGuidelines,
+                        onChanged: (v) =>
+                            setState(() => _agreedToGuidelines = v ?? false),
+                        title: const Text(
+                          'I agree to the house rules',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 22),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submitting ? null : _submit,
-                  child: _submitting
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.onGold,
-                          ),
-                        )
-                      : const Text('Request to join'),
+                const SizedBox(height: 22),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _submitting ? null : _submit,
+                    child: _submitting
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.onGold,
+                            ),
+                          )
+                        : const Text('Request to join'),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

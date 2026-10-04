@@ -69,7 +69,9 @@ class _TodoDetailScreenState extends State<TodoDetailScreen> {
                     contentPadding: EdgeInsets.zero,
                     value: selected.contains(u.id),
                     onChanged: (v) => setDialog(
-                      () => v == true ? selected.add(u.id) : selected.remove(u.id),
+                      () => v == true
+                          ? selected.add(u.id)
+                          : selected.remove(u.id),
                     ),
                     secondary: MemberAvatar(user: u, radius: 16),
                     title: Text(u.firstName),
@@ -187,7 +189,10 @@ class _TodoDetailScreenState extends State<TodoDetailScreen> {
                               : 'Shared with $sharedNames.')
                         : 'Shared by ${owner?.firstName ?? 'a member'}. '
                               'You can tick items and add new ones.',
-                    style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.muted,
+                    ),
                   ),
                 ),
               ],
@@ -211,13 +216,18 @@ class _TodoDetailScreenState extends State<TodoDetailScreen> {
                             color: AppColors.danger,
                             alignment: Alignment.centerRight,
                             padding: const EdgeInsets.only(right: 20),
-                            child: const Icon(Icons.delete, color: Colors.white),
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                            ),
                           ),
-                          onDismissed: (_) => todos.removeItem(list.id, item.id),
+                          onDismissed: (_) =>
+                              todos.removeItem(list.id, item.id),
                           child: CheckboxListTile(
                             controlAffinity: ListTileControlAffinity.leading,
                             value: item.done,
-                            onChanged: (_) => todos.toggleItem(list.id, item.id),
+                            onChanged: (_) =>
+                                todos.toggleItem(list.id, item.id),
                             title: Text(
                               item.text,
                               style: TextStyle(
@@ -244,7 +254,9 @@ class _TodoDetailScreenState extends State<TodoDetailScreen> {
                     child: TextField(
                       controller: _controller,
                       textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(hintText: 'Add an item…'),
+                      decoration: const InputDecoration(
+                        hintText: 'Add an item…',
+                      ),
                       onSubmitted: (_) => _add(),
                     ),
                   ),
