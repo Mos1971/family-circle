@@ -44,10 +44,7 @@ class ExternalEventTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${event.timeLabel} · ${event.source.label}$where',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.muted,
-                      ),
+                      style: TextStyle(fontSize: 12, color: AppColors.muted),
                     ),
                   ],
                 ),
@@ -90,14 +87,14 @@ class SyncPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Read-only and only for you: your events show here in blue. '
             'Nothing is saved on our servers and nobody else can see them.',
             style: TextStyle(fontSize: 12, color: AppColors.muted),
           ),
           const SizedBox(height: 10),
           if (!ext.supported)
-            const Text(
+            Text(
               'Calendar sync works in the web app. Open Family Circle in '
               'your browser.',
               style: TextStyle(fontSize: 12, color: AppColors.muted),
@@ -156,10 +153,7 @@ class _SourceRow extends StatelessWidget {
                     Text(source.label),
                     Text(
                       status,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.muted,
-                      ),
+                      style: TextStyle(fontSize: 12, color: AppColors.muted),
                     ),
                   ],
                 ),
@@ -200,7 +194,7 @@ class _SourceRow extends StatelessWidget {
               padding: const EdgeInsets.only(left: 30, top: 2),
               child: Text(
                 error,
-                style: const TextStyle(fontSize: 12, color: AppColors.danger),
+                style: TextStyle(fontSize: 12, color: AppColors.danger),
               ),
             ),
         ],

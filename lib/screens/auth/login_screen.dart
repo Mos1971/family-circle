@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Enter your email and we\x27ll send you a link to choose a new password.',
               style: TextStyle(color: AppColors.muted, fontSize: 13),
             ),
@@ -114,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const AppWordmark(fontSize: 44),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Your family. Your circle.',
                   style: TextStyle(color: AppColors.muted, fontSize: 15),
                 ),
@@ -139,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: ElevatedButton(
                     onPressed: _submitting ? null : _submit,
                     child: _submitting
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
@@ -200,7 +200,7 @@ class _DemoAccounts extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Skip credentials and explore instantly as a seeded member.',
             style: TextStyle(color: AppColors.muted, fontSize: 12),
           ),

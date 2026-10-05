@@ -110,7 +110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 const AppWordmark(fontSize: 30),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Create your account',
                   style: TextStyle(color: AppColors.muted, fontSize: 14),
                 ),
@@ -126,7 +126,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     selectedBackgroundColor: AppColors.gold,
                     selectedForegroundColor: AppColors.onGold,
                     foregroundColor: AppColors.text,
-                    side: const BorderSide(color: AppColors.border),
+                    side: BorderSide(color: AppColors.border),
                   ),
                   onSelectionChanged: (v) => setState(() {
                     _creating = v.first;
@@ -138,7 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   _creating
                       ? 'Set up a brand-new private space for your family. You\x27ll be its admin.'
                       : 'Ask your circle admin for the invite code. They\x27ll approve you once you\x27ve signed up.',
-                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                  style: TextStyle(color: AppColors.muted, fontSize: 12),
                 ),
                 const SizedBox(height: 22),
                 if (_creating) ...[
@@ -202,7 +202,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 6),
-                      const Text(
+                      Text(
                         'Family Circle is a private space for families. Be kind, '
                         'keep it friendly and family-safe, and respect other '
                         'people\'s privacy — what\'s shared here stays here.',
@@ -229,7 +229,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: ElevatedButton(
                     onPressed: _submitting ? null : _submit,
                     child: _submitting
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(

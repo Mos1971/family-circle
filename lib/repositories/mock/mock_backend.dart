@@ -33,7 +33,8 @@ class MockBackend {
   final List<Announcement> announcements = [];
   final List<AppNotification> notifications = [];
   final List<ContentReport> reports = [];
-  final List<DirectMessage> directMessages = [];
+  final List<ChatMessage> messages = [];
+  final List<Chat> chats = [];
   final List<CalendarEvent> events = [];
   final List<TodoList> todoLists = [];
   final Map<String, NotificationPrefs> prefsByUserId = {};
@@ -261,40 +262,79 @@ class MockBackend {
       ),
     );
 
-    directMessages.addAll([
-      DirectMessage(
-        id: newId(),
-        senderId: sarah.id,
-        recipientId: david.id,
-        text: 'Can you grab milk on the way home?',
-        createdAt: now.subtract(const Duration(hours: 5)),
+    ChatMessage dm(
+      String from,
+      String to,
+      String text,
+      Duration ago, {
+      bool read = false,
+    }) => ChatMessage(
+      id: newId(),
+      chatId: dmChatId(from, to),
+      senderId: from,
+      text: text,
+      createdAt: now.subtract(ago),
+      participants: [from, to],
+      readBy: {from, if (read) to},
+    );
+
+    messages.addAll([
+      dm(
+        sarah.id,
+        david.id,
+        'Can you grab milk on the way home?',
+        const Duration(hours: 5),
         read: true,
       ),
-      DirectMessage(
-        id: newId(),
-        senderId: david.id,
-        recipientId: sarah.id,
-        text: 'On it 👍',
-        createdAt: now.subtract(const Duration(hours: 4, minutes: 50)),
+      dm(
+        david.id,
+        sarah.id,
+        'On it 👍',
+        const Duration(hours: 4, minutes: 50),
         read: true,
       ),
-      DirectMessage(
-        id: newId(),
-        senderId: maya.id,
-        recipientId: sarah.id,
-        text:
-            'Hi Sarah! I saw your cupcake post — are the school fair '
-            'details anywhere?',
-        createdAt: now.subtract(const Duration(minutes: 35)),
+      dm(
+        maya.id,
+        sarah.id,
+        'Hi Sarah! I saw your cupcake post — are the school fair details '
+        'anywhere?',
+        const Duration(minutes: 35),
       ),
-      DirectMessage(
+      dm(
+        admin.id,
+        sarah.id,
+        'Thanks for helping organise the picnic! Let me know if you need '
+        'anything from me.',
+        const Duration(days: 1),
+      ),
+    ]);
+
+    final picnic = Chat(
+      id: newId(),
+      name: 'Picnic planning 🧺',
+      participants: [admin.id, sarah.id, david.id, maya.id],
+      createdBy: admin.id,
+      createdAt: now.subtract(const Duration(days: 2)),
+    );
+    chats.add(picnic);
+    messages.addAll([
+      ChatMessage(
         id: newId(),
+        chatId: picnic.id,
         senderId: admin.id,
-        recipientId: sarah.id,
-        text:
-            'Thanks for helping organise the picnic! Let me know if you '
-            'need anything from me.',
-        createdAt: now.subtract(const Duration(days: 1)),
+        text: 'Who is bringing what to the picnic?',
+        createdAt: now.subtract(const Duration(hours: 9)),
+        participants: picnic.participants,
+        readBy: {admin.id, sarah.id, david.id, maya.id},
+      ),
+      ChatMessage(
+        id: newId(),
+        chatId: picnic.id,
+        senderId: david.id,
+        text: 'I can do the drinks and a football ⚽',
+        createdAt: now.subtract(const Duration(hours: 2)),
+        participants: picnic.participants,
+        readBy: {david.id},
       ),
     ]);
 

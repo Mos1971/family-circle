@@ -209,24 +209,53 @@ AppNotification notificationFromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
 
 // ---- Messages -------------------------------------------------------------
 
-Map<String, dynamic> messageToMap(DirectMessage m) => {
+Map<String, dynamic> messageToMap(ChatMessage m) => {
+  'chatId': m.chatId,
   'senderId': m.senderId,
-  'recipientId': m.recipientId,
-  'participants': [m.senderId, m.recipientId],
+  'participants': m.participants,
   'text': m.text,
   'createdAt': Timestamp.fromDate(m.createdAt),
-  'read': m.read,
+  'readBy': m.readBy.toList(),
 };
 
-DirectMessage messageFromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
+/// Also understands messages saved before group chats existed, which had a
+/// recipientId and a single 'read' flag instead of chatId / readBy.
+ChatMessage messageFromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
   final m = d.data()!;
-  return DirectMessage(
+  final sender = (m['senderId'] ?? '') as String;
+  final participants = List<String>.from(m['participants'] as List? ?? []);
+  final recipient =
+      (m['recipientId'] as String?) ??
+      participants.firstWhere((p) => p != sender, orElse: () => sender);
+  final readBy = m['readBy'] is List
+      ? Set<String>.from(m['readBy'] as List)
+      : <String>{sender, if (m['read'] == true) recipient};
+  return ChatMessage(
     id: d.id,
-    senderId: m['senderId'] ?? '',
-    recipientId: m['recipientId'] ?? '',
+    chatId: (m['chatId'] as String?) ?? dmChatId(sender, recipient),
+    senderId: sender,
     text: m['text'] ?? '',
     createdAt: _date(m['createdAt']),
-    read: m['read'] ?? false,
+    participants: participants,
+    readBy: readBy,
+  );
+}
+
+Map<String, dynamic> chatToMap(Chat c) => {
+  'name': c.name,
+  'participants': c.participants,
+  'createdBy': c.createdBy,
+  'createdAt': Timestamp.fromDate(c.createdAt),
+};
+
+Chat chatFromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
+  final m = d.data()!;
+  return Chat(
+    id: d.id,
+    name: m['name'] ?? 'Group',
+    participants: List<String>.from(m['participants'] as List? ?? []),
+    createdBy: m['createdBy'] ?? '',
+    createdAt: _date(m['createdAt']),
   );
 }
 

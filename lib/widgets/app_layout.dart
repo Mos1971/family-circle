@@ -72,7 +72,13 @@ const _items = [
     Icons.chat_bubble_outline,
     Icons.chat_bubble,
   ),
-  _NavItem('/plan', 'Plan', Icons.event_note_outlined, Icons.event_note),
+  _NavItem('/plan', 'Calendar', Icons.event_note_outlined, Icons.event_note),
+  _NavItem(
+    '/plan?tab=lists',
+    'Lists',
+    Icons.checklist_outlined,
+    Icons.checklist,
+  ),
   _NavItem('/family', 'Family', Icons.groups_outlined, Icons.groups),
   _NavItem('/profile', 'Profile', Icons.person_outline, Icons.person),
 ];
@@ -84,11 +90,13 @@ class _Sidebar extends StatelessWidget {
 
   /// Which sidebar entry a (possibly nested) location belongs to.
   String? _activePath() {
-    if (location.startsWith('/lists')) return '/plan';
+    if (location.startsWith('/lists') || location.contains('tab=lists')) {
+      return '/plan?tab=lists';
+    }
     if (location.startsWith('/members')) return '/family';
     if (location.startsWith('/announcements')) return '/profile';
     for (final i in _items) {
-      if (location.startsWith(i.path)) return i.path;
+      if (location.startsWith(i.path.split('?').first)) return i.path;
     }
     if (location.startsWith('/admin')) return '/admin';
     if (location.startsWith('/notifications')) return '/notifications';
@@ -110,13 +118,17 @@ class _Sidebar extends StatelessWidget {
       item: item,
       selected: active == item.path,
       badge: badge,
-      onTap: () => context.go(item.path),
+      onTap: () => context.go(
+        item.path.contains('?')
+            ? '${item.path}&t=${DateTime.now().millisecondsSinceEpoch}'
+            : item.path,
+      ),
     );
 
     return Container(
       width: 264,
-      decoration: const BoxDecoration(
-        color: Color(0xFF0E0E0E),
+      decoration: BoxDecoration(
+        color: AppColors.sidebar,
         border: Border(right: BorderSide(color: AppColors.border)),
       ),
       padding: const EdgeInsets.fromLTRB(16, 28, 16, 20),
@@ -184,7 +196,7 @@ class _Sidebar extends StatelessWidget {
                           Text(
                             me.familyName,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColors.muted,
                             ),
@@ -264,7 +276,7 @@ class _SidebarTile extends StatelessWidget {
                     ),
                     child: Text(
                       '$badge',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: AppColors.onGold,
@@ -326,10 +338,10 @@ class _CircleMenu extends StatelessWidget {
               active?.name ?? '',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.muted, fontSize: 12),
+              style: TextStyle(color: AppColors.muted, fontSize: 12),
             ),
           ),
-          const Icon(Icons.unfold_more, size: 16, color: AppColors.muted),
+          Icon(Icons.unfold_more, size: 16, color: AppColors.muted),
         ],
       ),
     );

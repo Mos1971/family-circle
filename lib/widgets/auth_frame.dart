@@ -69,7 +69,7 @@ class _BrandPanel extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: const TextStyle(color: AppColors.muted, height: 1.4),
+                  style: TextStyle(color: AppColors.muted, height: 1.4),
                 ),
               ],
             ),
@@ -79,11 +79,11 @@ class _BrandPanel extends StatelessWidget {
     );
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF241C06), Color(0xFF0A0A0A)],
+          colors: AppColors.brandGradient,
         ),
         border: Border(right: BorderSide(color: AppColors.border)),
       ),

@@ -77,7 +77,8 @@ class FirebaseBackend {
   final List<Announcement> announcements = [];
   final List<AppNotification> notifications = [];
   final List<ContentReport> reports = [];
-  final List<DirectMessage> directMessages = [];
+  final List<ChatMessage> messages = [];
+  final List<Chat> chats = [];
   final List<TodoList> todoLists = [];
   final Map<String, NotificationPrefs> prefsByUserId = {};
   List<CalendarEvent> _sharedEvents = [];
@@ -270,7 +271,8 @@ class FirebaseBackend {
     announcements.clear();
     notifications.clear();
     reports.clear();
-    directMessages.clear();
+    messages.clear();
+    chats.clear();
     todoLists.clear();
     prefsByUserId.clear();
     _sharedEvents = [];
@@ -329,9 +331,15 @@ class FirebaseBackend {
         notificationChanges.add(null);
       });
       listen(col('messages').where('participants', arrayContains: id), (s) {
-        directMessages
+        messages
           ..clear()
           ..addAll(_safe(s, messageFromDoc));
+        messageChanges.add(null);
+      });
+      listen(col('chats').where('participants', arrayContains: id), (s) {
+        chats
+          ..clear()
+          ..addAll(_safe(s, chatFromDoc));
         messageChanges.add(null);
       });
       listen(col('events').where('shared', isEqualTo: true), (s) {

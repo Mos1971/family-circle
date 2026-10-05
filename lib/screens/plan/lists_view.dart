@@ -111,7 +111,7 @@ class ListsView extends StatelessWidget {
                                       ? 'Private'
                                       : 'Shared with ${l.sharedWith.length}')
                                 : 'Shared by ${owner?.firstName ?? 'a member'}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColors.muted,
                             ),
@@ -123,7 +123,7 @@ class ListsView extends StatelessWidget {
                               value: progress,
                               minHeight: 6,
                               backgroundColor: AppColors.border,
-                              valueColor: const AlwaysStoppedAnimation(
+                              valueColor: AlwaysStoppedAnimation(
                                 AppColors.gold,
                               ),
                             ),
@@ -131,7 +131,7 @@ class ListsView extends StatelessWidget {
                           const SizedBox(height: 6),
                           Text(
                             '${l.doneCount} of ${l.items.length} done',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColors.muted,
                             ),

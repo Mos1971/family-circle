@@ -79,7 +79,7 @@ class AdminDashboardScreen extends StatelessWidget {
           const SizedBox(height: 24),
           SectionHeader(title: 'Pending members (${pending.length})'),
           if (pending.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(bottom: 8),
               child: Text(
                 'No pending requests.',
@@ -98,14 +98,14 @@ class AdminDashboardScreen extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.check_circle,
                           color: AppColors.success,
                         ),
                         onPressed: () => users.approve(u.id),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.cancel, color: AppColors.danger),
+                        icon: Icon(Icons.cancel, color: AppColors.danger),
                         onPressed: () => users.reject(u.id),
                       ),
                     ],
@@ -116,7 +116,7 @@ class AdminDashboardScreen extends StatelessWidget {
           const SizedBox(height: 20),
           SectionHeader(title: 'Reported content (${reports.length})'),
           if (reports.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(bottom: 8),
               child: Text(
                 'Nothing to review right now.',
@@ -134,7 +134,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 : null,
           ),
           if (admins.length >= kMaxAdmins)
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(bottom: 8),
               child: Text(
                 'Maximum of 3 admins reached — remove one to add another.',
@@ -152,7 +152,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 subtitle: Text(u.email, style: const TextStyle(fontSize: 12)),
                 trailing: admins.length > 1
                     ? IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.remove_circle_outline,
                           color: AppColors.gold,
                         ),
@@ -186,7 +186,7 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           SectionHeader(title: 'Members (${members.length})'),
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(bottom: 8),
             child: Text(
               'Remove a member to end their access to the feed and to '
@@ -207,7 +207,7 @@ class AdminDashboardScreen extends StatelessWidget {
                   style: const TextStyle(fontSize: 12),
                 ),
                 trailing: IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.person_remove_outlined,
                     color: AppColors.danger,
                   ),
@@ -255,10 +255,7 @@ class _StatCard extends StatelessWidget {
             value,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: AppColors.muted),
-          ),
+          Text(label, style: TextStyle(fontSize: 12, color: AppColors.muted)),
         ],
       ),
     );
@@ -293,10 +290,7 @@ class _ReportTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'Reported ${timeAgo(report.createdAt)}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.muted,
-                    ),
+                    style: TextStyle(fontSize: 12, color: AppColors.muted),
                   ),
                 ],
               ),
@@ -369,7 +363,7 @@ class _InviteCodeCard extends StatelessWidget {
         children: [
           Text(circleName, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Share this invite code with family. They enter it when they '
             'sign up, then you approve them below.',
             style: TextStyle(fontSize: 12, color: AppColors.muted),
@@ -380,7 +374,7 @@ class _InviteCodeCard extends StatelessWidget {
               Expanded(
                 child: SelectableText(
                   code.isEmpty ? '—' : code,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 4,

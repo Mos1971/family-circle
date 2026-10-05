@@ -189,21 +189,58 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       }
 
-      // ---- private messages ---------------------------------------------
-      // Only the two participants can ever read a message.
+      // ---- group chats ---------------------------------------------------
+      // A group's record (name + members). Private one-to-one chats have no
+      // record; their id alone names the two people.
+      match /chats/{chatId} {
+        allow read: if inCircle(cid) && request.auth.uid in resource.data.participants;
+        allow create: if inCircle(cid)
+          && request.resource.data.createdBy == request.auth.uid
+          && request.auth.uid in request.resource.data.participants
+          && request.resource.data.participants.size() >= 2
+          && request.resource.data.participants.size() <= 60;
+        // Members can add people or leave; only the creator can rename.
+        allow update: if inCircle(cid)
+          && request.auth.uid in resource.data.participants
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['participants', 'name'])
+          && request.resource.data.participants.size() <= 60
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['name'])
+              || resource.data.createdBy == request.auth.uid)
+          && (request.resource.data.participants.hasAll(resource.data.participants)
+              || (!(request.auth.uid in request.resource.data.participants)
+                  && request.resource.data.participants.hasAll(
+                       resource.data.participants.removeAll([request.auth.uid]))));
+        allow delete: if false;
+      }
+
+      // ---- messages (private chats and groups) ---------------------------
+      // Each message carries the list of people who could see the chat when it
+      // was sent. Only those people can ever read it.
       match /messages/{id} {
-        allow read: if signedIn() && request.auth.uid in resource.data.participants;
+        allow read: if inCircle(cid) && request.auth.uid in resource.data.participants;
         allow create: if inCircle(cid)
           && request.resource.data.senderId == request.auth.uid
-          && request.resource.data.participants.size() == 2
-          && request.resource.data.participants.hasAll(
-               [request.resource.data.senderId, request.resource.data.recipientId])
-          && request.resource.data.senderId != request.resource.data.recipientId
-          && approvedInCircle(request.resource.data.recipientId, cid);
-        // The recipient can mark a message as read; nothing else is editable.
-        allow update: if signedIn()
-          && resource.data.recipientId == request.auth.uid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+          && request.auth.uid in request.resource.data.participants
+          && request.resource.data.participants.size() >= 2
+          && request.resource.data.participants.size() <= 60
+          && (
+            // Private chat: exactly two people, and the other is a member.
+            (request.resource.data.chatId.matches('dm[|].*')
+              && request.resource.data.participants.size() == 2
+              && approvedInCircle(
+                   request.resource.data.participants.removeAll([request.auth.uid])[0], cid))
+            ||
+            // Group chat: must match the group's current member list.
+            (exists(/databases/$(database)/documents/circles/$(cid)/chats/$(request.resource.data.chatId))
+              && get(/databases/$(database)/documents/circles/$(cid)/chats/$(request.resource.data.chatId)).data.participants
+                   == request.resource.data.participants)
+          );
+        // A participant can mark a message read (only ever adding themselves).
+        allow update: if inCircle(cid)
+          && request.auth.uid in resource.data.participants
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy'])
+          && request.resource.data.readBy.hasAll(resource.data.get('readBy', []));
         allow delete: if false;
       }
 

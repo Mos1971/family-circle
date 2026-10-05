@@ -61,7 +61,7 @@ class _MembersScreenState extends State<MembersScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: TextField(
               onChanged: (v) => setState(() => _query = v.trim()),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 prefixIcon: Icon(Icons.search, color: AppColors.muted),
                 hintText: 'Search people or families',
               ),
@@ -69,7 +69,7 @@ class _MembersScreenState extends State<MembersScreen> {
           ),
           Expanded(
             child: names.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'No one found.',
                       style: TextStyle(color: AppColors.muted),
@@ -83,7 +83,7 @@ class _MembersScreenState extends State<MembersScreen> {
                           padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
                           child: Text(
                             family.toUpperCase(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.gold,
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -96,7 +96,7 @@ class _MembersScreenState extends State<MembersScreen> {
                             leading: MemberAvatar(user: u, radius: 22),
                             title: Text(u.firstName),
                             subtitle: u.isAdmin
-                                ? const Text(
+                                ? Text(
                                     'Circle admin',
                                     style: TextStyle(color: AppColors.gold),
                                   )
@@ -113,10 +113,12 @@ class _MembersScreenState extends State<MembersScreen> {
                                     tooltip: 'Message ${u.firstName}',
                                     icon: const Icon(Icons.chat_bubble_outline),
                                     onPressed: () =>
-                                        context.push('/messages/${u.id}'),
+                                        context.push('/messages/dm/${u.id}'),
                                   ),
                             onTap: () => widget.pickToMessage
-                                ? context.pushReplacement('/messages/${u.id}')
+                                ? context.pushReplacement(
+                                    '/messages/dm/${u.id}',
+                                  )
                                 : context.push('/members/${u.id}'),
                           ),
                       ],

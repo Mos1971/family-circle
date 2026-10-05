@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/appearance_card.dart';
 import '../../widgets/circle_switcher.dart';
 import '../../widgets/member_avatar.dart';
 
@@ -58,13 +59,10 @@ class ProfileScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 if (me.familyName.isNotEmpty)
-                  Text(
-                    me.familyName,
-                    style: const TextStyle(color: AppColors.gold),
-                  ),
+                  Text(me.familyName, style: TextStyle(color: AppColors.gold)),
                 if (me.isAdmin) ...[
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'CIRCLE ADMIN',
                     style: TextStyle(
                       color: AppColors.gold,
@@ -79,12 +77,12 @@ class ProfileScreen extends StatelessWidget {
                   Text(
                     me.bio,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.muted),
+                    style: TextStyle(color: AppColors.muted),
                   ),
                 const SizedBox(height: 6),
                 Text(
                   'Member since ${DateFormat.yMMMM().format(me.joinDate)}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                  style: TextStyle(fontSize: 12, color: AppColors.muted),
                 ),
               ],
             ),
@@ -109,6 +107,8 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const CircleSwitcher(),
+          const SizedBox(height: 16),
+          const AppearanceCard(),
           const SizedBox(height: 16),
           Card(
             child: Column(
@@ -137,8 +137,8 @@ class ProfileScreen extends StatelessWidget {
                 ],
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.logout, color: AppColors.danger),
-                  title: const Text(
+                  leading: Icon(Icons.logout, color: AppColors.danger),
+                  title: Text(
                     'Log out',
                     style: TextStyle(color: AppColors.danger),
                   ),
@@ -168,17 +168,14 @@ class _StatTile extends StatelessWidget {
           children: [
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: AppColors.gold,
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 12, color: AppColors.muted),
-            ),
+            Text(label, style: TextStyle(fontSize: 12, color: AppColors.muted)),
           ],
         ),
       ),

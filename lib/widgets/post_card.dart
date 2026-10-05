@@ -47,17 +47,14 @@ class PostCard extends StatelessWidget {
                       ),
                       Text(
                         timeAgo(post.createdAt),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.muted,
-                        ),
+                        style: TextStyle(fontSize: 12, color: AppColors.muted),
                       ),
                     ],
                   ),
                 ),
                 if (me != null && (post.authorId == me.id || me.isAdmin))
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_horiz, color: AppColors.muted),
+                    icon: Icon(Icons.more_horiz, color: AppColors.muted),
                     onSelected: (v) {
                       if (v == 'delete') {
                         feed.deletePost(post.id, me.id);
@@ -85,7 +82,7 @@ class PostCard extends StatelessWidget {
                   )
                 else if (me != null && post.authorId != me.id)
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.flag_outlined,
                       color: AppColors.muted,
                       size: 20,

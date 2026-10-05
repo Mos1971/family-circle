@@ -21,7 +21,7 @@ Future<void> showPromoteAdminDialog(BuildContext context) {
         content: SizedBox(
           width: double.maxFinite,
           child: eligible.isEmpty
-              ? const Padding(
+              ? Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     'No other approved members to promote.',

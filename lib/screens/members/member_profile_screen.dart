@@ -53,11 +53,11 @@ class MemberProfileScreen extends StatelessWidget {
                 if (member.familyName.isNotEmpty)
                   Text(
                     member.familyName,
-                    style: const TextStyle(color: AppColors.gold),
+                    style: TextStyle(color: AppColors.gold),
                   ),
                 if (member.isAdmin) ...[
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'CIRCLE ADMIN',
                     style: TextStyle(
                       color: AppColors.gold,
@@ -72,13 +72,13 @@ class MemberProfileScreen extends StatelessWidget {
                   Text(
                     member.bio,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.muted),
+                    style: TextStyle(color: AppColors.muted),
                   ),
                 ],
                 const SizedBox(height: 6),
                 Text(
                   'Member since ${DateFormat.yMMMM().format(member.joinDate)}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                  style: TextStyle(fontSize: 12, color: AppColors.muted),
                 ),
               ],
             ),
@@ -86,7 +86,7 @@ class MemberProfileScreen extends StatelessWidget {
           const SizedBox(height: 20),
           if (me != null && me.id != member.id)
             ElevatedButton.icon(
-              onPressed: () => context.push('/messages/${member.id}'),
+              onPressed: () => context.push('/messages/dm/${member.id}'),
               icon: const Icon(Icons.chat_bubble_outline),
               label: Text('Message ${member.firstName}'),
             ),
@@ -94,10 +94,7 @@ class MemberProfileScreen extends StatelessWidget {
           Text('Posts', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 10),
           if (posts.isEmpty)
-            const Text(
-              'No posts yet.',
-              style: TextStyle(color: AppColors.muted),
-            )
+            Text('No posts yet.', style: TextStyle(color: AppColors.muted))
           else
             ...posts.map(
               (p) => Padding(

@@ -13,17 +13,32 @@ class MessageProvider extends ChangeNotifier {
   List<ConversationSummary> getConversations(String userId) =>
       _repo.getConversations(userId);
 
-  List<DirectMessage> getThread(String userId, String otherUserId) =>
-      _repo.getThread(userId, otherUserId);
+  Chat? getChat(String chatId) => _repo.getChat(chatId);
 
-  DirectMessage send({
+  List<ChatMessage> getMessages(String chatId, String userId) =>
+      _repo.getMessages(chatId, userId);
+
+  ChatMessage send({
+    required String chatId,
     required String senderId,
-    required String recipientId,
     required String text,
-  }) => _repo.send(senderId: senderId, recipientId: recipientId, text: text);
+  }) => _repo.send(chatId: chatId, senderId: senderId, text: text);
 
-  void markThreadRead(String userId, String otherUserId) =>
-      _repo.markThreadRead(userId, otherUserId);
+  void markRead(String chatId, String userId) => _repo.markRead(chatId, userId);
 
   int unreadCountFor(String userId) => _repo.unreadCountFor(userId);
+
+  Chat createGroup({
+    required String creatorId,
+    required String name,
+    required Set<String> memberIds,
+  }) =>
+      _repo.createGroup(creatorId: creatorId, name: name, memberIds: memberIds);
+
+  void renameGroup(String chatId, String name) =>
+      _repo.renameGroup(chatId, name);
+  void addMembers(String chatId, Set<String> userIds) =>
+      _repo.addMembers(chatId, userIds);
+  void leaveGroup(String chatId, String userId) =>
+      _repo.leaveGroup(chatId, userId);
 }

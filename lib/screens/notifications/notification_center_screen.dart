@@ -68,10 +68,7 @@ class NotificationCenterScreen extends StatelessWidget {
                   subtitle: Text(n.body),
                   trailing: Text(
                     timeAgo(n.createdAt),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.muted,
-                    ),
+                    style: TextStyle(fontSize: 11, color: AppColors.muted),
                   ),
                   isThreeLine: n.body.length > 40,
                 );
@@ -87,8 +84,9 @@ String? _targetFor(AppNotificationType type) {
     case AppNotificationType.message:
       return '/messages';
     case AppNotificationType.event:
-    case AppNotificationType.todo:
       return '/plan';
+    case AppNotificationType.todo:
+      return '/plan?tab=lists';
     case AppNotificationType.announcement:
       return '/announcements';
     case AppNotificationType.comment:

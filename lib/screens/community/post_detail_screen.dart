@@ -95,7 +95,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 ),
                 const SizedBox(height: 8),
                 if (topLevel.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Text(
                       'No comments yet — be the first to say something.',
@@ -133,7 +133,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         children: [
                           Text(
                             'Replying to ${_replyingToName ?? 'comment'}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColors.muted,
                             ),
@@ -144,7 +144,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               _replyingToCommentId = null;
                               _replyingToName = null;
                             }),
-                            child: const Icon(
+                            child: Icon(
                               Icons.close,
                               size: 14,
                               color: AppColors.muted,
@@ -231,15 +231,12 @@ class _CommentTile extends StatelessWidget {
                     children: [
                       Text(
                         timeAgo(comment.createdAt),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.muted,
-                        ),
+                        style: TextStyle(fontSize: 11, color: AppColors.muted),
                       ),
                       const SizedBox(width: 12),
                       GestureDetector(
                         onTap: () => onReply(author?.firstName),
-                        child: const Text(
+                        child: Text(
                           'Reply',
                           style: TextStyle(
                             fontSize: 11,
@@ -264,7 +261,7 @@ class _CommentTile extends StatelessWidget {
                               ),
                             );
                           },
-                          child: const Text(
+                          child: Text(
                             'Report',
                             style: TextStyle(
                               fontSize: 11,

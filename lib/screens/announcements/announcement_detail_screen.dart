@@ -72,7 +72,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
             children: [
               const Text('📢', style: TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'FROM THE ADMINS',
                 style: TextStyle(
                   color: AppColors.gold,
@@ -90,7 +90,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             timeAgo(announcement.createdAt),
-            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+            style: TextStyle(color: AppColors.muted, fontSize: 12),
           ),
           const SizedBox(height: 18),
           Text(

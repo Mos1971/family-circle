@@ -101,7 +101,7 @@ class _AddCircleScreenState extends State<AddCircleScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Use the same account for more than one family or group. '
                   'You can switch between circles any time.',
                   style: TextStyle(color: AppColors.muted, fontSize: 14),
@@ -118,7 +118,7 @@ class _AddCircleScreenState extends State<AddCircleScreen> {
                     selectedBackgroundColor: AppColors.gold,
                     selectedForegroundColor: AppColors.onGold,
                     foregroundColor: AppColors.text,
-                    side: const BorderSide(color: AppColors.border),
+                    side: BorderSide(color: AppColors.border),
                   ),
                   onSelectionChanged: (v) => setState(() {
                     _creating = v.first;
@@ -167,7 +167,7 @@ class _AddCircleScreenState extends State<AddCircleScreen> {
                   child: ElevatedButton(
                     onPressed: _submitting ? null : _submit,
                     child: _submitting
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(

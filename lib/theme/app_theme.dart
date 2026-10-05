@@ -1,35 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Black & gold palette for Family Circle.
+/// Black & gold palette for Family Circle, in a dark and a light version.
+///
+/// The colours are read through getters so that one switch ([setBrightness])
+/// restyles the whole app. Screens still just write `AppColors.gold`; they are
+/// rebuilt when the theme changes (see ThemeModeProvider / app.dart).
 class AppColors {
   AppColors._();
 
-  static const gold = Color(0xFFD4AF37);
-  static const goldDark = Color(0xFFB8921F);
-  static const goldLight = Color(0xFFF0D77A);
-  static const bg = Color(0xFF0A0A0A);
-  static const surface = Color(0xFF161616);
-  static const surfaceHigh = Color(0xFF211E16);
-  static const text = Color(0xFFF5EFDC);
-  static const onGold = Color(0xFF111111);
-  static const muted = Color(0xFF9C9684);
-  static const border = Color(0xFF2E2A1E);
+  static bool _dark = true;
 
-  static const success = Color(0xFF5CB88A);
-  static const danger = Color(0xFFE5675A);
+  /// Set once per theme change, before the widget tree rebuilds.
+  static void setBrightness(Brightness b) => _dark = b == Brightness.dark;
+  static Brightness get brightness =>
+      _dark ? Brightness.dark : Brightness.light;
+  static bool get isDark => _dark;
+
+  // Gold: bright on dark; a deeper gold on light so text stays readable.
+  static Color get gold =>
+      _dark ? const Color(0xFFD4AF37) : const Color(0xFFB8860B);
+  static Color get goldDark =>
+      _dark ? const Color(0xFFB8921F) : const Color(0xFF8F6A08);
+  static Color get goldLight =>
+      _dark ? const Color(0xFFF0D77A) : const Color(0xFFD4AF37);
+
+  static Color get bg =>
+      _dark ? const Color(0xFF0A0A0A) : const Color(0xFFF8F4EA);
+  static Color get surface =>
+      _dark ? const Color(0xFF161616) : const Color(0xFFFFFFFF);
+  static Color get surfaceHigh =>
+      _dark ? const Color(0xFF211E16) : const Color(0xFFF1EADA);
+  static Color get sidebar =>
+      _dark ? const Color(0xFF0E0E0E) : const Color(0xFFFFFFFF);
+  static Color get text =>
+      _dark ? const Color(0xFFF5EFDC) : const Color(0xFF1B1A17);
+  static Color get onGold => const Color(0xFF111111);
+  static Color get muted =>
+      _dark ? const Color(0xFF9C9684) : const Color(0xFF6D6858);
+  static Color get border =>
+      _dark ? const Color(0xFF2E2A1E) : const Color(0xFFE4DCC8);
+
+  static Color get success =>
+      _dark ? const Color(0xFF5CB88A) : const Color(0xFF2E8B57);
+  static Color get danger =>
+      _dark ? const Color(0xFFE5675A) : const Color(0xFFC0392B);
+
+  /// Sign-in brand panel gradient.
+  static List<Color> get brandGradient => _dark
+      ? const [Color(0xFF241C06), Color(0xFF0A0A0A)]
+      : const [Color(0xFFF3E6BA), Color(0xFFF8F4EA)];
 }
 
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get dark {
+  /// The full Material theme for [brightness]. Also flips [AppColors] so the
+  /// two always agree.
+  static ThemeData build(Brightness brightness) {
+    AppColors.setBrightness(brightness);
+    return _theme(brightness);
+  }
+
+  static ThemeData get dark => build(Brightness.dark);
+  static ThemeData get light => build(Brightness.light);
+
+  static ThemeData _theme(Brightness brightness) {
     final base = ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: brightness,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.gold,
-        brightness: Brightness.dark,
+        brightness: brightness,
         primary: AppColors.gold,
         onPrimary: AppColors.onGold,
         secondary: AppColors.goldLight,
@@ -99,7 +141,7 @@ class AppTheme {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: AppColors.border),
+          side: BorderSide(color: AppColors.border),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -115,7 +157,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.gold,
-          side: const BorderSide(color: AppColors.gold, width: 1.4),
+          side: BorderSide(color: AppColors.gold, width: 1.4),
           padding: buttonPadding,
           textStyle: textTheme.labelLarge,
           shape: pill,
@@ -127,7 +169,7 @@ class AppTheme {
           textStyle: textTheme.labelLarge,
         ),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.gold,
         foregroundColor: AppColors.onGold,
       ),
@@ -141,8 +183,8 @@ class AppTheme {
           horizontal: 18,
           vertical: 16,
         ),
-        hintStyle: const TextStyle(color: AppColors.muted),
-        labelStyle: const TextStyle(color: AppColors.muted),
+        hintStyle: TextStyle(color: AppColors.muted),
+        labelStyle: TextStyle(color: AppColors.muted),
         border: fieldBorder(AppColors.border),
         enabledBorder: fieldBorder(AppColors.border),
         focusedBorder: fieldBorder(AppColors.gold, 1.6),
@@ -151,9 +193,9 @@ class AppTheme {
         backgroundColor: AppColors.surfaceHigh,
         selectedColor: AppColors.gold.withValues(alpha: 0.2),
         labelStyle: textTheme.bodyMedium,
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: AppColors.border),
       ),
-      listTileTheme: const ListTileThemeData(
+      listTileTheme: ListTileThemeData(
         iconColor: AppColors.gold,
         textColor: AppColors.text,
       ),
@@ -175,14 +217,11 @@ class AppTheme {
               ? AppColors.gold
               : Colors.transparent,
         ),
-        checkColor: const WidgetStatePropertyAll(AppColors.onGold),
-        side: const BorderSide(color: AppColors.muted, width: 1.5),
+        checkColor: WidgetStatePropertyAll(AppColors.onGold),
+        side: BorderSide(color: AppColors.muted, width: 1.5),
       ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.border,
-        thickness: 1,
-      ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      dividerTheme: DividerThemeData(color: AppColors.border, thickness: 1),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
         selectedItemColor: AppColors.gold,
         unselectedItemColor: AppColors.muted,
@@ -193,7 +232,7 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         constraints: BoxConstraints(maxWidth: 640),
       ),
-      popupMenuTheme: const PopupMenuThemeData(color: AppColors.surfaceHigh),
+      popupMenuTheme: PopupMenuThemeData(color: AppColors.surfaceHigh),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.gold,
         contentTextStyle: textTheme.bodyMedium?.copyWith(

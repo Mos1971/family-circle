@@ -17,6 +17,7 @@ import '../models/todo.dart';
 import '../models/user.dart';
 import '../repositories/admin_repository.dart';
 import '../repositories/announcement_repository.dart';
+import '../repositories/conversation_logic.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/feed_repository.dart';
 import '../repositories/message_repository.dart';
@@ -620,61 +621,67 @@ class FirebaseMessageRepository implements MessageRepository {
   final FirebaseBackend _b;
 
   @override
-  List<ConversationSummary> getConversations(String userId) {
-    final byOther = <String, List<DirectMessage>>{};
-    for (final m in _b.directMessages) {
-      if (!m.involves(userId)) continue;
-      byOther.putIfAbsent(m.otherParty(userId), () => []).add(m);
+  List<ConversationSummary> getConversations(String userId) =>
+      buildConversations(userId, _b.messages, _b.chats);
+
+  @override
+  Chat? getChat(String chatId) {
+    for (final c in _b.chats) {
+      if (c.id == chatId) return c;
     }
-    final rows = byOther.entries.map((e) {
-      final msgs = e.value..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-      return ConversationSummary(
-        otherUserId: e.key,
-        lastMessage: msgs.last,
-        unreadCount: msgs
-            .where((m) => m.recipientId == userId && !m.read)
-            .length,
-      );
-    }).toList();
-    rows.sort(
-      (a, b) => b.lastMessage.createdAt.compareTo(a.lastMessage.createdAt),
-    );
-    return rows;
+    return null;
   }
 
   @override
-  List<DirectMessage> getThread(String userId, String otherUserId) =>
-      _b.directMessages
-          .where((m) => m.between(userId, otherUserId))
-          .toList(growable: false)
-        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  List<ChatMessage> getMessages(String chatId, String userId) =>
+      messagesFor(chatId, userId, _b.messages);
 
   @override
-  DirectMessage send({
+  ChatMessage send({
+    required String chatId,
     required String senderId,
-    required String recipientId,
     required String text,
   }) {
-    final recipient = _b.userById(recipientId);
-    if (recipient == null || recipient.status != MemberStatus.approved) {
-      throw StateError('That member is not available to message.');
+    final List<String> people;
+    if (isDmChatId(chatId)) {
+      people = dmParticipants(chatId);
+      final other = people.firstWhere((p) => p != senderId);
+      final recipient = _b.userById(other);
+      if (recipient == null || recipient.status != MemberStatus.approved) {
+        throw StateError('That member is not available to message.');
+      }
+    } else {
+      final chat = getChat(chatId);
+      if (chat == null || !chat.participants.contains(senderId)) {
+        throw StateError('You are not in this group.');
+      }
+      people = chat.participants;
     }
+
     final ref = _b.col('messages').doc();
-    final message = DirectMessage(
+    final message = ChatMessage(
       id: ref.id,
+      chatId: chatId,
       senderId: senderId,
-      recipientId: recipientId,
       text: text,
       createdAt: DateTime.now(),
+      participants: List.of(people),
     );
+    // Show it straight away; the live listener replaces it with the stored copy.
+    _b.messages.add(message);
+    _b.messageChanges.add(null);
     _write(ref.set(messageToMap(message)), 'send message');
 
-    if (_b.prefsFor(recipientId).messagesOn) {
-      final sender = _b.userById(senderId);
+    final sender = _b.userById(senderId);
+    final groupName = getChat(chatId)?.name;
+    for (final id in people.where((p) => p != senderId)) {
+      if (!_b.prefsFor(id).messagesOn) continue;
       _b.notify(
-        userId: recipientId,
+        userId: id,
         type: AppNotificationType.message,
-        title: '✉️ ${sender?.firstName ?? 'Someone'} sent you a message',
+        title: groupName == null
+            ? '✉️ ${sender?.firstName ?? 'Someone'} sent you a message'
+            : '💬 ${sender?.firstName ?? 'Someone'} in $groupName',
         body: text,
       );
     }
@@ -682,21 +689,66 @@ class FirebaseMessageRepository implements MessageRepository {
   }
 
   @override
-  void markThreadRead(String userId, String otherUserId) {
-    final unread = _b.directMessages.where(
-      (m) => m.recipientId == userId && m.senderId == otherUserId && !m.read,
-    );
+  void markRead(String chatId, String userId) {
+    final unread = _b.messages
+        .where((m) => m.chatId == chatId && m.isUnreadFor(userId))
+        .toList();
     if (unread.isEmpty) return;
     final batch = _b.db.batch();
     for (final m in unread) {
-      batch.update(_b.col('messages').doc(m.id), {'read': true});
+      m.readBy.add(userId); // optimistic, so the badge clears at once
+      batch.update(_b.col('messages').doc(m.id), {
+        'readBy': FieldValue.arrayUnion([userId]),
+      });
     }
-    _write(batch.commit(), 'mark thread read');
+    _b.messageChanges.add(null);
+    _write(batch.commit(), 'mark chat read');
   }
 
   @override
-  int unreadCountFor(String userId) =>
-      _b.directMessages.where((m) => m.recipientId == userId && !m.read).length;
+  int unreadCountFor(String userId) => unreadCount(userId, _b.messages);
+
+  @override
+  Chat createGroup({
+    required String creatorId,
+    required String name,
+    required Set<String> memberIds,
+  }) {
+    final ref = _b.col('chats').doc();
+    final chat = Chat(
+      id: ref.id,
+      name: name,
+      participants: {creatorId, ...memberIds}.toList(),
+      createdBy: creatorId,
+      createdAt: DateTime.now(),
+    );
+    _b.chats.add(chat);
+    _b.messageChanges.add(null);
+    _write(ref.set(chatToMap(chat)), 'create group');
+    return chat;
+  }
+
+  @override
+  void renameGroup(String chatId, String name) => _write(
+    _b.col('chats').doc(chatId).update({'name': name}),
+    'rename group',
+  );
+
+  @override
+  void addMembers(String chatId, Set<String> userIds) => _write(
+    _b.col('chats').doc(chatId).update({
+      'participants': FieldValue.arrayUnion(userIds.toList()),
+    }),
+    'add members',
+  );
+
+  @override
+  void leaveGroup(String chatId, String userId) => _write(
+    _b.col('chats').doc(chatId).update({
+      'participants': FieldValue.arrayRemove([userId]),
+    }),
+    'leave group',
+  );
 
   @override
   Stream<void> get changes => _b.messageChanges.stream;

@@ -15,6 +15,7 @@ import 'providers/message_provider.dart';
 import 'providers/notification_prefs_provider.dart';
 import 'providers/plan_providers.dart';
 import 'providers/notification_provider.dart';
+import 'providers/theme_mode_provider.dart';
 import 'providers/user_provider.dart';
 import 'repositories/mock/mock_admin_repository.dart';
 import 'repositories/mock/mock_announcement_repository.dart';
@@ -146,6 +147,7 @@ class FamilyCircleApp extends StatelessWidget {
           create: (ctx) => TodoProvider(ctx.read<_Repos>().todos),
         ),
         ChangeNotifierProvider(create: (_) => ExternalCalendarProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeModeProvider()),
         // Built once, after AuthProvider exists above it; GoRouter's own
         // refreshListenable (not a widget rebuild) reacts to auth changes.
         Provider<GoRouter>(
@@ -154,13 +156,22 @@ class FamilyCircleApp extends StatelessWidget {
       ],
       child: Builder(
         builder: (context) {
+          // Light / dark. The colours are read from AppColors while widgets
+          // build, so flip them first and rebuild the whole tree (the key)
+          // whenever the look changes.
+          final look = context.watch<ThemeModeProvider>().effective;
+          final theme = AppTheme.build(look);
           return MaterialApp.router(
             title: 'Family Circle',
             debugShowCheckedModeBanner: false,
             scaffoldMessengerKey: appMessengerKey,
-            theme: AppTheme.dark,
-            themeMode: ThemeMode.dark,
+            theme: theme,
+            themeMode: ThemeMode.light, // `theme` already matches [look]
             routerConfig: context.read<GoRouter>(),
+            builder: (context, child) => KeyedSubtree(
+              key: ValueKey(look),
+              child: child ?? const SizedBox.shrink(),
+            ),
           );
         },
       ),

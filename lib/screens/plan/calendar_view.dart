@@ -80,7 +80,7 @@ class _CalendarViewState extends State<CalendarView> {
           selectedBackgroundColor: AppColors.gold,
           selectedForegroundColor: AppColors.onGold,
           foregroundColor: AppColors.text,
-          side: const BorderSide(color: AppColors.border),
+          side: BorderSide(color: AppColors.border),
         ),
         onSelectionChanged: (s) => setState(() => _mode = s.first),
       ),
@@ -90,7 +90,7 @@ class _CalendarViewState extends State<CalendarView> {
           contentPadding: EdgeInsets.zero,
           dense: true,
           title: const Text('Show family events here'),
-          subtitle: const Text(
+          subtitle: Text(
             'Only you can see your calendar. Family events are shown '
             'in gold.',
             style: TextStyle(fontSize: 12, color: AppColors.muted),
@@ -146,7 +146,7 @@ class _CalendarViewState extends State<CalendarView> {
       ),
       const SizedBox(height: 8),
       if (agendaItems.isEmpty)
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(vertical: 16),
           child: Text(
             'Nothing planned.',
@@ -287,7 +287,7 @@ class _MonthGrid extends StatelessWidget {
                 child: Center(
                   child: Text(
                     d,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.muted,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -408,15 +408,12 @@ class _EventTile extends StatelessWidget {
                       Text(
                         '${event.timeLabel} · ${event.shared ? 'Family' : 'Private'}'
                         '${event.shared && owner != null ? ' · ${owner.firstName}' : ''}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.muted,
-                        ),
+                        style: TextStyle(fontSize: 12, color: AppColors.muted),
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: AppColors.muted),
+                Icon(Icons.chevron_right, color: AppColors.muted),
               ],
             ),
           ),
@@ -450,7 +447,7 @@ Future<void> showEventEditor(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: Container(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
@@ -532,10 +529,7 @@ Future<void> showEventEditor(
                     isShared
                         ? 'Everyone in Family Circle can see this.'
                         : 'Only you can see this.',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.muted,
-                    ),
+                    style: TextStyle(fontSize: 12, color: AppColors.muted),
                   ),
                   value: isShared,
                   onChanged: (v) => setSheet(() => isShared = v),
@@ -596,7 +590,7 @@ Future<void> showEventDetails(BuildContext context, String eventId) {
 
         return Container(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
@@ -608,14 +602,14 @@ Future<void> showEventDetails(BuildContext context, String eventId) {
               const SizedBox(height: 6),
               Text(
                 '${DateFormat('EEEE d MMMM').format(e.date)} · ${e.timeLabel}',
-                style: const TextStyle(color: AppColors.gold),
+                style: TextStyle(color: AppColors.gold),
               ),
               const SizedBox(height: 4),
               Text(
                 e.shared
                     ? 'Family calendar · added by ${owner?.firstName ?? 'a member'}'
                     : 'Private — only you can see this',
-                style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                style: TextStyle(fontSize: 12, color: AppColors.muted),
               ),
               if (e.notes.isNotEmpty) ...[
                 const SizedBox(height: 12),

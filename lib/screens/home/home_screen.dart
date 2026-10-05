@@ -13,7 +13,7 @@ import '../../widgets/announcement_card.dart';
 import '../../widgets/app_layout.dart';
 import '../../widgets/app_wordmark.dart';
 import '../../widgets/empty_state.dart';
-import '../../widgets/member_avatar.dart';
+import '../../widgets/conversation_avatar.dart';
 import '../../widgets/post_card.dart';
 import '../../widgets/section_header.dart';
 
@@ -65,7 +65,9 @@ class HomeScreen extends StatelessWidget {
           child: _QuickLink(
             icon: Icons.checklist_outlined,
             label: 'Lists',
-            onTap: () => context.go('/plan'),
+            onTap: () => context.go(
+              '/plan?tab=lists&t=${DateTime.now().millisecondsSinceEpoch}',
+            ),
           ),
         ),
         const SizedBox(width: 10),
@@ -93,8 +95,11 @@ class HomeScreen extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  MemberAvatar(
-                    user: users.getById(unreadConversations.first.otherUserId),
+                  ConversationAvatar(
+                    isGroup: unreadConversations.first.isGroup,
+                    user: unreadConversations.first.otherUserId == null
+                        ? null
+                        : users.getById(unreadConversations.first.otherUserId!),
                     radius: 20,
                   ),
                   const SizedBox(width: 12),
@@ -104,9 +109,11 @@ class HomeScreen extends StatelessWidget {
                       children: [
                         Text(
                           unreadConversations.length == 1
-                              ? '${users.getById(unreadConversations.first.otherUserId)?.firstName ?? 'Someone'} sent you a message'
+                              ? (unreadConversations.first.isGroup
+                                    ? 'New messages in ${unreadConversations.first.groupName}'
+                                    : '${users.getById(unreadConversations.first.otherUserId!)?.firstName ?? 'Someone'} sent you a message')
                               : 'You have ${unreadConversations.length} unread conversations',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.onGold,
                             fontWeight: FontWeight.w700,
                           ),
@@ -114,7 +121,7 @@ class HomeScreen extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           timeAgo(
-                            unreadConversations.first.lastMessage.createdAt,
+                            unreadConversations.first.lastMessage!.createdAt,
                           ),
                           style: TextStyle(
                             color: AppColors.onGold.withValues(alpha: 0.7),
@@ -124,7 +131,7 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right, color: AppColors.onGold),
+                  Icon(Icons.chevron_right, color: AppColors.onGold),
                 ],
               ),
             ),

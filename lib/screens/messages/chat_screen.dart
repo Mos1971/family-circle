@@ -2,21 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../widgets/app_back_button.dart';
-
+import '../../models/direct_message.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/message_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/time_format.dart';
+import '../../widgets/app_back_button.dart';
+import '../../widgets/conversation_avatar.dart';
 import '../../widgets/empty_state.dart';
-import '../../widgets/member_avatar.dart';
+import 'group_info.dart';
 
-/// Private one-to-one chat. Only the two participants can see it.
+/// A chat: either private (give [dmUserId]) or a group (give [groupId]).
+/// Only the people in the conversation can see it.
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, required this.otherUserId});
+  const ChatScreen({super.key, this.dmUserId, this.groupId})
+    : assert(dmUserId != null || groupId != null);
 
-  final String otherUserId;
+  final String? dmUserId;
+  final String? groupId;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -26,6 +30,11 @@ class _ChatScreenState extends State<ChatScreen> {
   final _controller = TextEditingController();
   final _scroll = ScrollController();
   late final MessageProvider _messages;
+
+  bool get _isGroup => widget.groupId != null;
+
+  String _chatId(String myId) =>
+      _isGroup ? widget.groupId! : dmChatId(myId, widget.dmUserId!);
 
   @override
   void initState() {
@@ -43,12 +52,12 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  // Keeps the thread read while it's open, including messages that arrive
-  // while the user is looking at it.
+  // Keeps the chat read while it's open, including messages that arrive while
+  // the person is looking at it.
   void _markRead() {
     final me = context.read<AuthProvider>().currentUser;
     if (me == null) return;
-    _messages.markThreadRead(me.id, widget.otherUserId);
+    _messages.markRead(_chatId(me.id), me.id);
   }
 
   void _send() {
@@ -56,11 +65,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = _controller.text.trim();
     if (me == null || text.isEmpty) return;
     try {
-      _messages.send(
-        senderId: me.id,
-        recipientId: widget.otherUserId,
-        text: text,
-      );
+      _messages.send(chatId: _chatId(me.id), senderId: me.id, text: text);
       _controller.clear();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_scroll.hasClients) {
@@ -73,7 +78,13 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('That member can\'t be messaged.')),
+        SnackBar(
+          content: Text(
+            _isGroup
+                ? 'You can\'t message this group.'
+                : 'That member can\'t be messaged.',
+          ),
+        ),
       );
     }
   }
@@ -81,38 +92,56 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final me = context.watch<AuthProvider>().currentUser;
-    final other = context.watch<UserProvider>().getById(widget.otherUserId);
+    final users = context.watch<UserProvider>();
+    final provider = context.watch<MessageProvider>();
     if (me == null) return const SizedBox.shrink();
 
-    if (other == null || !other.isApproved) {
+    final chatId = _chatId(me.id);
+    final other = _isGroup ? null : users.getById(widget.dmUserId!);
+    final chat = _isGroup ? provider.getChat(widget.groupId!) : null;
+
+    final unavailable = _isGroup
+        ? (chat == null || !chat.participants.contains(me.id))
+        : (other == null || !other.isApproved);
+    if (unavailable) {
       return Scaffold(
         appBar: AppBar(leading: const AppBackButton()),
-        body: const EmptyState(emoji: '✉️', title: 'Member not available'),
+        body: EmptyState(
+          emoji: '✉️',
+          title: _isGroup ? 'Group not available' : 'Member not available',
+        ),
       );
     }
 
-    final thread = context.watch<MessageProvider>().getThread(me.id, other.id);
+    final thread = provider.getMessages(chatId, me.id);
+    final title = _isGroup ? chat!.name : other!.firstName;
+    final subtitle = _isGroup
+        ? '${chat!.participants.length} people'
+        : other!.familyName;
 
     return Scaffold(
       appBar: AppBar(
         leading: const AppBackButton(),
         title: InkWell(
-          onTap: () => context.push('/members/${other.id}'),
+          onTap: () => _isGroup
+              ? showGroupInfo(context, widget.groupId!)
+              : context.push('/members/${other!.id}'),
           child: Row(
             children: [
-              MemberAvatar(user: other, radius: 16),
+              ConversationAvatar(isGroup: _isGroup, user: other, radius: 16),
               const SizedBox(width: 10),
               Flexible(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      other.firstName,
+                      title,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    if (other.familyName.isNotEmpty)
+                    if (subtitle.isNotEmpty)
                       Text(
-                        other.familyName,
+                        subtitle,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                   ],
@@ -121,6 +150,14 @@ class _ChatScreenState extends State<ChatScreen> {
             ],
           ),
         ),
+        actions: [
+          if (_isGroup)
+            IconButton(
+              tooltip: 'Group info',
+              icon: const Icon(Icons.info_outline),
+              onPressed: () => showGroupInfo(context, widget.groupId!),
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -128,13 +165,16 @@ class _ChatScreenState extends State<ChatScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             color: AppColors.surfaceHigh,
-            child: const Row(
+            child: Row(
               children: [
                 Icon(Icons.lock_outline, size: 14, color: AppColors.gold),
-                SizedBox(width: 6),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Private — only you and this member can see this chat.',
+                    _isGroup
+                        ? 'Private — only the ${chat!.participants.length} '
+                              'people in this group can see this chat.'
+                        : 'Private — only you and this member can see this chat.',
                     style: TextStyle(fontSize: 12, color: AppColors.muted),
                   ),
                 ),
@@ -147,9 +187,11 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: Padding(
                       padding: const EdgeInsets.all(24),
                       child: Text(
-                        'Say hello to ${other.firstName} 👋',
+                        _isGroup
+                            ? 'Say hello to the group 👋'
+                            : 'Say hello to ${other!.firstName} 👋',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppColors.muted),
+                        style: TextStyle(color: AppColors.muted),
                       ),
                     ),
                   )
@@ -159,10 +201,16 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemCount: thread.length,
                     itemBuilder: (context, i) {
                       final m = thread[i];
+                      final mine = m.senderId == me.id;
                       return _Bubble(
                         text: m.text,
                         time: timeAgo(m.createdAt),
-                        mine: m.senderId == me.id,
+                        mine: mine,
+                        // In a group, say who wrote each message.
+                        sender: _isGroup && !mine
+                            ? (users.getById(m.senderId)?.firstName ??
+                                  'Someone')
+                            : null,
                       );
                     },
                   ),
@@ -180,7 +228,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       maxLines: 4,
                       textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
-                        hintText: 'Message ${other.firstName}…',
+                        hintText: _isGroup
+                            ? 'Message the group…'
+                            : 'Message ${other!.firstName}…',
                       ),
                       onSubmitted: (_) => _send(),
                     ),
@@ -205,11 +255,17 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 class _Bubble extends StatelessWidget {
-  const _Bubble({required this.text, required this.time, required this.mine});
+  const _Bubble({
+    required this.text,
+    required this.time,
+    required this.mine,
+    this.sender,
+  });
 
   final String text;
   final String time;
   final bool mine;
+  final String? sender;
 
   @override
   Widget build(BuildContext context) {
@@ -234,6 +290,18 @@ class _Bubble extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (sender != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  sender!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.gold,
+                  ),
+                ),
+              ),
             Text(
               text,
               style: TextStyle(color: mine ? AppColors.onGold : AppColors.text),

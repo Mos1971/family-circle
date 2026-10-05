@@ -24,7 +24,7 @@ class FeedScreen extends StatelessWidget {
           ),
           child: Container(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),

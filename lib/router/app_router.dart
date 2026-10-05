@@ -16,6 +16,7 @@ import '../screens/members/member_profile_screen.dart';
 import '../screens/members/members_screen.dart';
 import '../screens/messages/chat_screen.dart';
 import '../screens/messages/messages_screen.dart';
+import '../screens/messages/new_group_screen.dart';
 import '../screens/notifications/notification_center_screen.dart';
 import '../screens/plan/plan_screen.dart';
 import '../screens/plan/todo_detail_screen.dart';
@@ -44,22 +45,31 @@ class AppRouter {
         ),
         ShellRoute(
           builder: (context, state, child) =>
-              AppLayout(location: state.uri.path, child: child),
+              AppLayout(location: state.uri.toString(), child: child),
           routes: [
             GoRoute(
               path: '/feed/post/:postId',
               builder: (c, s) =>
                   PostDetailScreen(postId: s.pathParameters['postId']!),
             ),
-            // '/messages/new' must be declared before '/messages/:userId'.
             GoRoute(
               path: '/messages/new',
               builder: (c, s) => const MembersScreen(pickToMessage: true),
             ),
+            // '/messages/group/new' must be declared before '/messages/group/:groupId'.
             GoRoute(
-              path: '/messages/:userId',
+              path: '/messages/group/new',
+              builder: (c, s) => const NewGroupScreen(),
+            ),
+            GoRoute(
+              path: '/messages/group/:groupId',
               builder: (c, s) =>
-                  ChatScreen(otherUserId: s.pathParameters['userId']!),
+                  ChatScreen(groupId: s.pathParameters['groupId']!),
+            ),
+            GoRoute(
+              path: '/messages/dm/:userId',
+              builder: (c, s) =>
+                  ChatScreen(dmUserId: s.pathParameters['userId']!),
             ),
             GoRoute(
               path: '/members/:userId',
@@ -129,7 +139,12 @@ class AppRouter {
                   routes: [
                     GoRoute(
                       path: '/plan',
-                      builder: (c, s) => const PlanScreen(),
+                      builder: (c, s) => PlanScreen(
+                        initialTab: s.uri.queryParameters['tab'] == 'lists'
+                            ? 1
+                            : 0,
+                        nonce: s.uri.queryParameters['t'],
+                      ),
                     ),
                   ],
                 ),

@@ -46,13 +46,13 @@ class AnnouncementCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 if (announcement.pinned)
-                  const Icon(Icons.push_pin, color: AppColors.gold, size: 16),
+                  Icon(Icons.push_pin, color: AppColors.gold, size: 16),
               ],
             ),
             const SizedBox(height: 10),
             Text(
               announcement.title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.text,
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
@@ -64,13 +64,13 @@ class AnnouncementCard extends StatelessWidget {
                 announcement.body,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.text, height: 1.4),
+                style: TextStyle(color: AppColors.text, height: 1.4),
               ),
             ],
             const SizedBox(height: 10),
             Text(
               timeAgo(announcement.createdAt),
-              style: const TextStyle(color: AppColors.muted, fontSize: 12),
+              style: TextStyle(color: AppColors.muted, fontSize: 12),
             ),
           ],
         ),

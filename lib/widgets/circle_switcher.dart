@@ -19,7 +19,7 @@ class CircleSwitcher extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.fromLTRB(16, 14, 16, 4),
             child: Text(
               'YOUR CIRCLES',
@@ -41,7 +41,7 @@ class CircleSwitcher extends StatelessWidget {
               ),
               title: Text(c.name),
               subtitle: c.id == active
-                  ? const Text(
+                  ? Text(
                       'Active',
                       style: TextStyle(color: AppColors.gold, fontSize: 12),
                     )

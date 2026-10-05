@@ -2,17 +2,56 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/direct_message.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/message_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/time_format.dart';
+import '../../widgets/conversation_avatar.dart';
 import '../../widgets/empty_state.dart';
-import '../../widgets/member_avatar.dart';
 
-/// Inbox: one row per person you've exchanged private messages with.
+/// Inbox: private chats and group chats in one list, newest first.
 class MessagesScreen extends StatelessWidget {
   const MessagesScreen({super.key});
+
+  void _newChat(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (sheet) => SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.person_outline),
+                title: const Text('New message'),
+                subtitle: const Text('A private chat with one person'),
+                onTap: () {
+                  Navigator.of(sheet).pop();
+                  context.push('/messages/new');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.group_add_outlined),
+                title: const Text('New group'),
+                subtitle: const Text('Chat with several people at once'),
+                onTap: () {
+                  Navigator.of(sheet).pop();
+                  context.push('/messages/group/new');
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,17 +65,17 @@ class MessagesScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Messages')),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/messages/new'),
+        onPressed: () => _newChat(context),
         icon: const Icon(Icons.edit_outlined),
-        label: const Text('New message'),
+        label: const Text('New chat'),
       ),
       body: conversations.isEmpty
           ? const EmptyState(
               emoji: '✉️',
               title: 'No messages yet',
               subtitle:
-                  'Start a private conversation with anyone in your Family '
-                  'Circle.',
+                  'Start a private chat with someone, or make a group for '
+                  'the whole family.',
             )
           : ListView.separated(
               padding: const EdgeInsets.only(bottom: 90),
@@ -44,23 +83,45 @@ class MessagesScreen extends StatelessWidget {
               separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (context, i) {
                 final c = conversations[i];
-                final other = users.getById(c.otherUserId);
+                final other = c.otherUserId == null
+                    ? null
+                    : users.getById(c.otherUserId!);
                 final unread = c.unreadCount > 0;
-                final prefix = c.lastMessage.senderId == me.id ? 'You: ' : '';
+                final last = c.lastMessage;
+
+                final title = c.isGroup
+                    ? c.groupName
+                    : (other == null
+                          ? 'Member'
+                          : other.familyName.isEmpty
+                          ? other.firstName
+                          : '${other.firstName} · ${other.familyName}');
+
+                String preview;
+                if (last == null) {
+                  preview = 'No messages yet';
+                } else {
+                  final mine = last.senderId == me.id;
+                  final who = mine
+                      ? 'You: '
+                      : (c.isGroup
+                            ? '${users.getById(last.senderId)?.firstName ?? 'Someone'}: '
+                            : '');
+                  preview = '$who${last.text}';
+                }
+
                 return ListTile(
-                  leading: MemberAvatar(user: other, radius: 22),
+                  leading: ConversationAvatar(isGroup: c.isGroup, user: other),
                   title: Text(
-                    other == null
-                        ? 'Member'
-                        : other.familyName.isEmpty
-                        ? other.firstName
-                        : '${other.firstName} · ${other.familyName}',
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontWeight: unread ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                   subtitle: Text(
-                    '$prefix${c.lastMessage.text}',
+                    preview,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -71,13 +132,14 @@ class MessagesScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        timeAgo(c.lastMessage.createdAt),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.muted,
+                      if (c.lastActivity != null)
+                        Text(
+                          timeAgo(c.lastActivity!),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.muted,
+                          ),
                         ),
-                      ),
                       if (unread) ...[
                         const SizedBox(height: 6),
                         CircleAvatar(
@@ -85,7 +147,7 @@ class MessagesScreen extends StatelessWidget {
                           backgroundColor: AppColors.gold,
                           child: Text(
                             '${c.unreadCount}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: AppColors.onGold,
@@ -95,10 +157,14 @@ class MessagesScreen extends StatelessWidget {
                       ],
                     ],
                   ),
-                  onTap: () => context.push('/messages/${c.otherUserId}'),
+                  onTap: () => context.push(_routeFor(c)),
                 );
               },
             ),
     );
   }
+
+  String _routeFor(ConversationSummary c) => c.isGroup
+      ? '/messages/group/${c.chatId}'
+      : '/messages/dm/${c.otherUserId}';
 }

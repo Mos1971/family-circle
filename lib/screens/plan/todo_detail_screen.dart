@@ -58,7 +58,7 @@ class _TodoDetailScreenState extends State<TodoDetailScreen> {
             child: ListView(
               shrinkWrap: true,
               children: [
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(bottom: 8),
                   child: Text(
                     'People you pick can see the list, tick things off and '
@@ -191,10 +191,7 @@ class _TodoDetailScreenState extends State<TodoDetailScreen> {
                               : 'Shared with $sharedNames.')
                         : 'Shared by ${owner?.firstName ?? 'a member'}. '
                               'You can tick items and add new ones.',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.muted,
-                    ),
+                    style: TextStyle(fontSize: 12, color: AppColors.muted),
                   ),
                 ),
               ],
