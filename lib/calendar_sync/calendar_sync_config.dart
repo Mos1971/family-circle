@@ -12,7 +12,7 @@ class CalendarSyncConfig {
 
   /// Azure portal -> App registrations -> Application (client) ID.
   /// Looks like 11111111-2222-3333-4444-555555555555
-  static const microsoftClientId = '';
+  static const microsoftClientId = '807a952b-d50f-44f8-a5d5-c3998b69808a';
 
   static bool get googleEnabled => googleClientId.isNotEmpty;
   static bool get microsoftEnabled => microsoftClientId.isNotEmpty;
