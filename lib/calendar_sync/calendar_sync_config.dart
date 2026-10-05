@@ -7,7 +7,8 @@ class CalendarSyncConfig {
 
   /// Google Cloud Console -> APIs & Services -> Credentials -> OAuth client ID
   /// (type "Web application"). Looks like 123456-abc.apps.googleusercontent.com
-  static const googleClientId = '';
+  static const googleClientId =
+      '926394248212-l5vj601v4lac0hoobq4cpkoiqsq099l7.apps.googleusercontent.com';
 
   /// Azure portal -> App registrations -> Application (client) ID.
   /// Looks like 11111111-2222-3333-4444-555555555555
