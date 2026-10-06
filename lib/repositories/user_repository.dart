@@ -23,6 +23,9 @@ abstract class UserRepository {
   List<AppUser> getPendingApproval();
   void approve(String userId);
   void reject(String userId);
+
+  /// Brings back someone who was removed or declined (no new welcome post).
+  void restore(String userId);
   void remove(String userId);
   void updateProfile(String userId, {String? bio});
 

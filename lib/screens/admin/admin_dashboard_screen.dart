@@ -31,6 +31,10 @@ class AdminDashboardScreen extends StatelessWidget {
     final pending = users.getPendingApproval();
     final reports = feed.getOpenReports();
     final admins = users.getAdmins();
+    final removed = users
+        .getAll()
+        .where((u) => u.status == MemberStatus.rejected)
+        .toList();
     final members = users
         .getAll()
         .where((u) => u.isApproved && !u.isAdmin)
@@ -217,6 +221,47 @@ class AdminDashboardScreen extends StatelessWidget {
               ),
             ),
           ),
+          if (removed.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            SectionHeader(title: 'Removed members (${removed.length})'),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                'These people can\'t see the circle. Restore brings them back '
+                'with their old profile.',
+                style: TextStyle(fontSize: 12, color: AppColors.muted),
+              ),
+            ),
+            ...removed.map(
+              (u) => Card(
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ListTile(
+                  leading: MemberAvatar(user: u, radius: 18),
+                  title: Text(u.firstName),
+                  subtitle: Text(
+                    u.familyName.isEmpty
+                        ? u.email
+                        : '${u.familyName} · ${u.email}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  trailing: OutlinedButton.icon(
+                    icon: const Icon(Icons.restore, size: 18),
+                    label: const Text('Restore'),
+                    onPressed: () {
+                      users.restore(u.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '${u.firstName} is back in the circle.',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

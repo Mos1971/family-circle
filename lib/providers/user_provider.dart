@@ -34,6 +34,7 @@ class UserProvider extends ChangeNotifier {
   List<AppUser> getPendingApproval() => _repo.getPendingApproval();
   void approve(String userId) => _repo.approve(userId);
   void reject(String userId) => _repo.reject(userId);
+  void restore(String userId) => _repo.restore(userId);
   void remove(String userId) => _repo.remove(userId);
   void updateProfile(String userId, {String? bio}) =>
       _repo.updateProfile(userId, bio: bio);

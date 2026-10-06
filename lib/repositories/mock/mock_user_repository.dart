@@ -55,6 +55,14 @@ class MockUserRepository implements UserRepository {
   }
 
   @override
+  void restore(String userId) {
+    final user = _backend.userById(userId);
+    if (user == null) return;
+    user.status = MemberStatus.approved;
+    _backend.userChanges.add(null);
+  }
+
+  @override
   void reject(String userId) {
     final user = _backend.userById(userId);
     if (user == null) return;

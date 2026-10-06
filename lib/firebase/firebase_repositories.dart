@@ -216,6 +216,10 @@ class FirebaseUserRepository implements UserRepository {
   }
 
   @override
+  void restore(String userId) =>
+      _write(_doc(userId).update({'status': 'approved'}), 'restore member');
+
+  @override
   void reject(String userId) =>
       _write(_doc(userId).update({'status': 'rejected'}), 'reject');
 
