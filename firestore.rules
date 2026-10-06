@@ -83,6 +83,12 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
              ['email', 'activeCircleId', 'circleIds', 'circleNames']);
       allow delete: if false;
+
+      // This person's devices that should receive push alerts. Only they can
+      // see or change them (the server function reads them with admin rights).
+      match /devices/{token} {
+        allow read, write: if signedIn() && request.auth.uid == userId;
+      }
     }
 
     // ---- circles ---------------------------------------------------------

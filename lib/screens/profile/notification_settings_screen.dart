@@ -6,6 +6,7 @@ import '../../widgets/app_back_button.dart';
 import '../../models/notification_prefs.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/notification_prefs_provider.dart';
+import '../../widgets/alerts_card.dart';
 
 class NotificationSettingsScreen extends StatelessWidget {
   const NotificationSettingsScreen({super.key});
@@ -29,6 +30,7 @@ class NotificationSettingsScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
+          const AlertsCard(),
           SwitchListTile(
             secondary: const Text('✉️', style: TextStyle(fontSize: 20)),
             title: const Text('Private messages'),

@@ -14,6 +14,7 @@ import 'providers/feed_provider.dart';
 import 'providers/message_provider.dart';
 import 'providers/notification_prefs_provider.dart';
 import 'providers/plan_providers.dart';
+import 'providers/push_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/theme_mode_provider.dart';
 import 'providers/user_provider.dart';
@@ -152,6 +153,13 @@ class FamilyCircleApp extends StatelessWidget {
         // refreshListenable (not a widget rebuild) reacts to auth changes.
         Provider<GoRouter>(
           create: (ctx) => AppRouter(ctx.read<AuthProvider>()).router,
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => PushProvider(
+            _firebase?.push,
+            ctx.read<AuthProvider>(),
+            ctx.read<GoRouter>(),
+          ),
         ),
       ],
       child: Builder(

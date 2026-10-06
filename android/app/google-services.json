@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "926394248212",
+    "project_id": "family-circle-mos71",
+    "storage_bucket": "family-circle-mos71.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:926394248212:android:f9cc41792b25ee5821cb01",
+        "android_client_info": {
+          "package_name": "com.familycircle.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "926394248212-j4aoamfe0qhverc21hrfsp27klsjbfgj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCojdk_heYNDLk7xf_Ney3SB01RS4IZG3M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "926394248212-j4aoamfe0qhverc21hrfsp27klsjbfgj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

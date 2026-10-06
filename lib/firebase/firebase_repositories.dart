@@ -115,7 +115,11 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> logout() => _b.logout();
+  Future<void> logout() async {
+    // Stop alerts reaching this device before the person is signed out.
+    await _b.push.unregister();
+    await _b.logout();
+  }
 
   @override
   Future<void> sendPasswordReset(String email) async {

@@ -18,6 +18,7 @@ import '../models/report.dart';
 import '../models/todo.dart';
 import '../models/user.dart';
 import 'codec.dart';
+import '../push/push_service.dart';
 import 'firebase_options.dart';
 
 typedef Json = Map<String, dynamic>;
@@ -69,6 +70,9 @@ class FirebaseBackend {
 
   final FirebaseAuth auth = FirebaseAuth.instance;
   final FirebaseFirestore db = FirebaseFirestore.instance;
+
+  /// Push alerts for this device.
+  late final PushService push = PushService(db, auth);
 
   // ---- Cached data --------------------------------------------------------
   final List<AppUser> users = [];

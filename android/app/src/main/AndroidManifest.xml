@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Needed in release builds to reach Firebase and the internet. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Android 13+: lets the app show alerts (the person is asked once). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="Family Circle"
         android:name="${applicationName}"
