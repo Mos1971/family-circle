@@ -7,6 +7,7 @@ import '../providers/message_provider.dart';
 import '../providers/notification_provider.dart';
 import '../providers/user_provider.dart';
 import '../theme/app_theme.dart';
+import 'app_bottom_nav.dart';
 import 'app_wordmark.dart';
 import 'member_avatar.dart';
 
@@ -25,6 +26,48 @@ class AppLayout extends StatelessWidget {
   final String location;
   final Widget child;
 
+  /// Screens that open on top of a tab (admin dashboard, a list, announcements,
+  /// someone's profile...) get the bottom menu bar too, so there is always a
+  /// way back. The main tabs already show their own bar, and chats / comment
+  /// screens stay clear of it so it doesn't crowd the typing area.
+  Widget _phoneLayout(BuildContext context) {
+    final path = Uri.parse(location).path;
+    final isTabRoot = kTabPaths.contains(path);
+    final isTyping =
+        path.startsWith('/messages/dm') ||
+        path.startsWith('/messages/group') ||
+        path.startsWith('/messages/new') ||
+        path.startsWith('/feed/post') ||
+        path.startsWith('/circles');
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    if (isTabRoot || isTyping) return child;
+
+    int index = 0;
+    if (path.startsWith('/lists') || path.startsWith('/plan')) {
+      index = 3;
+    } else if (path.startsWith('/admin') ||
+        path.startsWith('/announcements') ||
+        path.startsWith('/profile')) {
+      index = 4;
+    } else if (path.startsWith('/messages')) {
+      index = 2;
+    } else if (path.startsWith('/feed')) {
+      index = 1;
+    }
+
+    return Scaffold(
+      body: child,
+      // Hide while the keyboard is open (e.g. adding a list item) so it
+      // doesn't squeeze the screen.
+      bottomNavigationBar: keyboardOpen
+          ? null
+          : AppBottomNav(
+              currentIndex: index,
+              onTap: (i) => context.go(kTabPaths[i]),
+            ),
+    );
+  }
+
   double get _contentMaxWidth {
     if (location.startsWith('/home')) return 1180;
     if (location.startsWith('/plan')) return 1040;
@@ -33,7 +76,7 @@ class AppLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!isDesktopWidth(context)) return child;
+    if (!isDesktopWidth(context)) return _phoneLayout(context);
 
     return Scaffold(
       backgroundColor: AppColors.bg,
