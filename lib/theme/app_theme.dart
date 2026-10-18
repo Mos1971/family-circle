@@ -1,64 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Black & gold palette for Family Circle, in a dark and a light version.
-///
-/// The colours are read through getters so that one switch ([setBrightness])
-/// restyles the whole app. Screens still just write `AppColors.gold`; they are
-/// rebuilt when the theme changes (see ThemeModeProvider / app.dart).
-class AppColors {
-  AppColors._();
+import 'app_colors.dart';
 
-  static bool _dark = true;
-
-  /// Set once per theme change, before the widget tree rebuilds.
-  static void setBrightness(Brightness b) => _dark = b == Brightness.dark;
-  static Brightness get brightness =>
-      _dark ? Brightness.dark : Brightness.light;
-  static bool get isDark => _dark;
-
-  // Gold: bright on dark; a deeper gold on light so text stays readable.
-  static Color get gold =>
-      _dark ? const Color(0xFFD4AF37) : const Color(0xFFB8860B);
-  static Color get goldDark =>
-      _dark ? const Color(0xFFB8921F) : const Color(0xFF8F6A08);
-  static Color get goldLight =>
-      _dark ? const Color(0xFFF0D77A) : const Color(0xFFD4AF37);
-
-  static Color get bg =>
-      _dark ? const Color(0xFF0A0A0A) : const Color(0xFFF8F4EA);
-  static Color get surface =>
-      _dark ? const Color(0xFF161616) : const Color(0xFFFFFFFF);
-  static Color get surfaceHigh =>
-      _dark ? const Color(0xFF211E16) : const Color(0xFFF1EADA);
-  static Color get sidebar =>
-      _dark ? const Color(0xFF0E0E0E) : const Color(0xFFFFFFFF);
-  static Color get text =>
-      _dark ? const Color(0xFFF5EFDC) : const Color(0xFF1B1A17);
-  static Color get onGold => const Color(0xFF111111);
-  static Color get muted =>
-      _dark ? const Color(0xFF9C9684) : const Color(0xFF6D6858);
-  static Color get border =>
-      _dark ? const Color(0xFF2E2A1E) : const Color(0xFFE4DCC8);
-
-  static Color get success =>
-      _dark ? const Color(0xFF5CB88A) : const Color(0xFF2E8B57);
-  static Color get danger =>
-      _dark ? const Color(0xFFE5675A) : const Color(0xFFC0392B);
-
-  /// Sign-in brand panel gradient.
-  static List<Color> get brandGradient => _dark
-      ? const [Color(0xFF241C06), Color(0xFF0A0A0A)]
-      : const [Color(0xFFF3E6BA), Color(0xFFF8F4EA)];
-}
+export 'app_colors.dart';
 
 class AppTheme {
   AppTheme._();
 
-  /// The full Material theme for [brightness]. Also flips [AppColors] so the
-  /// two always agree.
-  static ThemeData build(Brightness brightness) {
-    AppColors.setBrightness(brightness);
+  /// The full Material theme for [brightness] and colour [scheme]. Also flips
+  /// [AppColors] so the two always agree.
+  static ThemeData build(
+    Brightness brightness, [
+    AppScheme scheme = AppScheme.gold,
+  ]) {
+    AppColors.setLook(brightness, scheme);
     return _theme(brightness);
   }
 

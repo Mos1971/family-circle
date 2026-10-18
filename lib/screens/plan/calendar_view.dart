@@ -531,8 +531,8 @@ Future<void> showEventEditor(
                         icon: const Icon(Icons.event_available, size: 18),
                         label: Text(
                           pickedEnd == null
-                              ? 'End date (optional)'
-                              : 'Ends ${DateFormat('EEE d MMM').format(pickedEnd!)}',
+                              ? 'End date'
+                              : DateFormat('EEE d MMM').format(pickedEnd!),
                         ),
                         onPressed: () async {
                           final d = await showDatePicker(
@@ -545,24 +545,14 @@ Future<void> showEventEditor(
                         },
                       ),
                     ),
-                    if (pickedEnd != null)
-                      IconButton(
-                        tooltip: 'Remove end date',
-                        icon: const Icon(Icons.close),
-                        onPressed: () => setSheet(() => pickedEnd = null),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
+                    const SizedBox(width: 10),
                     Expanded(
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.schedule, size: 18),
                         label: Text(
                           pickedEndTime == null
-                              ? 'End time (optional)'
-                              : 'Ends ${pickedEndTime!.format(ctx)}',
+                              ? 'End time'
+                              : pickedEndTime!.format(ctx),
                         ),
                         onPressed: () async {
                           final t = await showTimePicker(
@@ -576,21 +566,30 @@ Future<void> showEventEditor(
                         },
                       ),
                     ),
-                    if (pickedEndTime != null)
-                      IconButton(
-                        tooltip: 'Remove end time',
-                        icon: const Icon(Icons.close),
-                        onPressed: () => setSheet(() => pickedEndTime = null),
-                      ),
                   ],
                 ),
-                if (pickedTime != null)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () => setSheet(() => pickedTime = null),
-                      child: const Text('Make all day'),
-                    ),
+                if (pickedTime != null ||
+                    pickedEnd != null ||
+                    pickedEndTime != null)
+                  Wrap(
+                    children: [
+                      if (pickedTime != null)
+                        TextButton(
+                          onPressed: () => setSheet(() => pickedTime = null),
+                          child: const Text('Make all day'),
+                        ),
+                      if (pickedEnd != null)
+                        TextButton(
+                          onPressed: () => setSheet(() => pickedEnd = null),
+                          child: const Text('Clear end date'),
+                        ),
+                      if (pickedEndTime != null)
+                        TextButton(
+                          onPressed: () =>
+                              setSheet(() => pickedEndTime = null),
+                          child: const Text('Clear end time'),
+                        ),
+                    ],
                   ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,

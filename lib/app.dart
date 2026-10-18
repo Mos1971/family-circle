@@ -167,8 +167,10 @@ class FamilyCircleApp extends StatelessWidget {
           // Light / dark. The colours are read from AppColors while widgets
           // build, so flip them first and rebuild the whole tree (the key)
           // whenever the look changes.
-          final look = context.watch<ThemeModeProvider>().effective;
-          final theme = AppTheme.build(look);
+          final themeProvider = context.watch<ThemeModeProvider>();
+          final look = themeProvider.effective;
+          final scheme = themeProvider.scheme;
+          final theme = AppTheme.build(look, scheme);
           return MaterialApp.router(
             title: 'Family Circle',
             debugShowCheckedModeBanner: false,
@@ -177,7 +179,7 @@ class FamilyCircleApp extends StatelessWidget {
             themeMode: ThemeMode.light, // `theme` already matches [look]
             routerConfig: context.read<GoRouter>(),
             builder: (context, child) => KeyedSubtree(
-              key: ValueKey(look),
+              key: ValueKey('${look.name}-${scheme.name}'),
               child: child ?? const SizedBox.shrink(),
             ),
           );

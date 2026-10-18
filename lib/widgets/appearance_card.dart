@@ -4,7 +4,60 @@ import 'package:provider/provider.dart';
 import '../providers/theme_mode_provider.dart';
 import '../theme/app_theme.dart';
 
-/// Lets the person choose Light, Dark, or follow their device.
+class _SchemeChoice extends StatelessWidget {
+  const _SchemeChoice({
+    required this.scheme,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final AppScheme scheme;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: SizedBox(
+        width: 84,
+        child: Column(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: scheme.swatch,
+                border: Border.all(
+                  color: selected ? AppColors.text : AppColors.border,
+                  width: selected ? 3 : 1,
+                ),
+              ),
+              child: selected
+                  ? const Icon(Icons.check, color: Colors.black87)
+                  : null,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              scheme.label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? AppColors.text : AppColors.muted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Lets the person choose Light, Dark, or follow their device, plus a colour
+/// scheme.
 class AppearanceCard extends StatelessWidget {
   const AppearanceCard({super.key});
 
@@ -60,7 +113,23 @@ class AppearanceCard extends StatelessWidget {
                     context.read<ThemeModeProvider>().setMode(s.first),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 18),
+            Text('Colour scheme', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 10,
+              runSpacing: 12,
+              children: [
+                for (final s in AppScheme.values)
+                  _SchemeChoice(
+                    scheme: s,
+                    selected: s == theme.scheme,
+                    onTap: () =>
+                        context.read<ThemeModeProvider>().setScheme(s),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
             Text(
               theme.mode == ThemeMode.system
                   ? 'Matches your phone or computer setting.'
