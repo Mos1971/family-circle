@@ -77,10 +77,11 @@ class MockUserRepository implements UserRepository {
   }
 
   @override
-  void updateProfile(String userId, {String? bio}) {
+  void updateProfile(String userId, {String? bio, String? profileEmoji}) {
     final user = _backend.userById(userId);
     if (user == null) return;
     if (bio != null) user.bio = bio;
+    if (profileEmoji != null) user.profileEmoji = profileEmoji;
     _backend.userChanges.add(null);
   }
 

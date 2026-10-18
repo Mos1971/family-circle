@@ -229,9 +229,13 @@ class FirebaseUserRepository implements UserRepository {
   void remove(String userId) => reject(userId);
 
   @override
-  void updateProfile(String userId, {String? bio}) {
-    if (bio == null) return;
-    _write(_doc(userId).update({'bio': bio}), 'profile');
+  void updateProfile(String userId, {String? bio, String? profileEmoji}) {
+    final changes = <String, Object?>{
+      if (bio != null) 'bio': bio,
+      if (profileEmoji != null) 'profileEmoji': profileEmoji,
+    };
+    if (changes.isEmpty) return;
+    _write(_doc(userId).update(changes), 'profile');
   }
 
   @override
@@ -791,6 +795,7 @@ class FirebaseCalendarRepository implements CalendarRepository {
     required String title,
     required DateTime date,
     int? minutesFromMidnight,
+    DateTime? endDate,
     String notes = '',
     required bool shared,
   }) {
@@ -801,6 +806,7 @@ class FirebaseCalendarRepository implements CalendarRepository {
       title: title,
       date: DateTime(date.year, date.month, date.day),
       minutesFromMidnight: minutesFromMidnight,
+      endDate: endDate,
       notes: notes,
       shared: shared,
     );
@@ -847,6 +853,7 @@ class FirebaseCalendarRepository implements CalendarRepository {
       title: source.title,
       date: source.date,
       minutesFromMidnight: source.minutesFromMidnight,
+      endDate: source.endDate,
       notes: source.notes,
       copiedFromId: source.id,
     );

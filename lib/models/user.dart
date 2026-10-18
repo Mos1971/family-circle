@@ -35,7 +35,7 @@ class AppUser {
   MemberStatus status;
   final DateTime joinDate;
   int postCount;
-  final String profileEmoji;
+  String profileEmoji;
 
   bool get isAdmin => role == MemberRole.admin;
   bool get isApproved => status == MemberStatus.approved;

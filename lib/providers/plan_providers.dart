@@ -27,12 +27,7 @@ class CalendarProvider extends ChangeNotifier {
   /// Events on [day], sorted all-day first then by time.
   List<CalendarEvent> onDay(List<CalendarEvent> events, DateTime day) {
     final list = events
-        .where(
-          (e) =>
-              e.date.year == day.year &&
-              e.date.month == day.month &&
-              e.date.day == day.day,
-        )
+        .where((e) => e.coversDay(day))
         .toList();
     list.sort(
       (a, b) =>
@@ -46,6 +41,7 @@ class CalendarProvider extends ChangeNotifier {
     required String title,
     required DateTime date,
     int? minutesFromMidnight,
+    DateTime? endDate,
     String notes = '',
     required bool shared,
   }) => _repo.add(
@@ -53,6 +49,7 @@ class CalendarProvider extends ChangeNotifier {
     title: title,
     date: date,
     minutesFromMidnight: minutesFromMidnight,
+    endDate: endDate,
     notes: notes,
     shared: shared,
   );

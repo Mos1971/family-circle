@@ -258,10 +258,8 @@ class _MonthGrid extends StatelessWidget {
   final List<ExternalEvent> externalEvents;
   final ValueChanged<DateTime> onSelect;
 
-  bool _has(List<CalendarEvent> list, DateTime d) => list.any(
-    (e) =>
-        e.date.year == d.year && e.date.month == d.month && e.date.day == d.day,
-  );
+  bool _has(List<CalendarEvent> list, DateTime d) =>
+      list.any((e) => e.coversDay(d));
 
   bool _hasExternal(DateTime d) => externalEvents.any(
     (e) =>
@@ -406,6 +404,7 @@ class _EventTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
+                        '${event.multiDay ? '${DateFormat('d MMM').format(event.date)} – ${DateFormat('d MMM').format(event.lastDay)} · ' : ''}'
                         '${event.timeLabel} · ${event.shared ? 'Family' : 'Private'}'
                         '${event.shared && owner != null ? ' · ${owner.firstName}' : ''}',
                         style: TextStyle(fontSize: 12, color: AppColors.muted),
@@ -435,6 +434,7 @@ Future<void> showEventEditor(
   final title = TextEditingController();
   final notes = TextEditingController();
   var pickedDate = date;
+  DateTime? pickedEnd;
   TimeOfDay? pickedTime;
   var isShared = shared;
 
@@ -488,7 +488,15 @@ Future<void> showEventEditor(
                             firstDate: DateTime(2020),
                             lastDate: DateTime(2100),
                           );
-                          if (d != null) setSheet(() => pickedDate = d);
+                          if (d != null) {
+                            setSheet(() {
+                              pickedDate = d;
+                              if (pickedEnd != null &&
+                                  pickedEnd!.isBefore(d)) {
+                                pickedEnd = null;
+                              }
+                            });
+                          }
                         },
                       ),
                     ),
@@ -512,6 +520,36 @@ Future<void> showEventEditor(
                         },
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.event_available, size: 18),
+                        label: Text(
+                          pickedEnd == null
+                              ? 'End date (optional)'
+                              : 'Ends ${DateFormat('EEE d MMM').format(pickedEnd!)}',
+                        ),
+                        onPressed: () async {
+                          final d = await showDatePicker(
+                            context: ctx,
+                            initialDate: pickedEnd ?? pickedDate,
+                            firstDate: pickedDate,
+                            lastDate: DateTime(2100),
+                          );
+                          if (d != null) setSheet(() => pickedEnd = d);
+                        },
+                      ),
+                    ),
+                    if (pickedEnd != null)
+                      IconButton(
+                        tooltip: 'Remove end date',
+                        icon: const Icon(Icons.close),
+                        onPressed: () => setSheet(() => pickedEnd = null),
+                      ),
                   ],
                 ),
                 if (pickedTime != null)
@@ -546,6 +584,9 @@ Future<void> showEventEditor(
                         title: t,
                         notes: notes.text.trim(),
                         date: pickedDate,
+                        endDate: pickedEnd == null || pickedEnd == pickedDate
+                            ? null
+                            : pickedEnd,
                         minutesFromMidnight: pickedTime == null
                             ? null
                             : pickedTime!.hour * 60 + pickedTime!.minute,
@@ -601,7 +642,10 @@ Future<void> showEventDetails(BuildContext context, String eventId) {
               Text(e.title, style: Theme.of(ctx).textTheme.titleLarge),
               const SizedBox(height: 6),
               Text(
-                '${DateFormat('EEEE d MMMM').format(e.date)} · ${e.timeLabel}',
+                e.multiDay
+                    ? '${DateFormat('EEE d MMM').format(e.date)} – '
+                          '${DateFormat('EEE d MMM').format(e.lastDay)} · ${e.timeLabel}'
+                    : '${DateFormat('EEEE d MMMM').format(e.date)} · ${e.timeLabel}',
                 style: TextStyle(color: AppColors.gold),
               ),
               const SizedBox(height: 4),

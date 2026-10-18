@@ -27,7 +27,7 @@ abstract class UserRepository {
   /// Brings back someone who was removed or declined (no new welcome post).
   void restore(String userId);
   void remove(String userId);
-  void updateProfile(String userId, {String? bio});
+  void updateProfile(String userId, {String? bio, String? profileEmoji});
 
   List<AppUser> getAdmins();
 

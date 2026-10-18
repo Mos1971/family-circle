@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
 import 'member_avatar.dart';
 import 'reaction_bar.dart';
+import 'reaction_summary.dart';
 
 class PostCard extends StatelessWidget {
   const PostCard({super.key, required this.post, this.showCommentLink = true});
@@ -123,6 +124,7 @@ class PostCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
               ),
+            ReactionSummary(post: post),
             const SizedBox(height: 14),
             Row(
               children: [

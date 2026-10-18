@@ -36,8 +36,8 @@ class UserProvider extends ChangeNotifier {
   void reject(String userId) => _repo.reject(userId);
   void restore(String userId) => _repo.restore(userId);
   void remove(String userId) => _repo.remove(userId);
-  void updateProfile(String userId, {String? bio}) =>
-      _repo.updateProfile(userId, bio: bio);
+  void updateProfile(String userId, {String? bio, String? profileEmoji}) =>
+      _repo.updateProfile(userId, bio: bio, profileEmoji: profileEmoji);
 
   List<AppUser> getAdmins() => _repo.getAdmins();
   bool promoteToAdmin(String userId) => _repo.promoteToAdmin(userId);

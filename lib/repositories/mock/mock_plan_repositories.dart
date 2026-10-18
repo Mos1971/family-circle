@@ -32,6 +32,7 @@ class MockCalendarRepository implements CalendarRepository {
     required String title,
     required DateTime date,
     int? minutesFromMidnight,
+    DateTime? endDate,
     String notes = '',
     required bool shared,
   }) {
@@ -41,6 +42,7 @@ class MockCalendarRepository implements CalendarRepository {
       title: title,
       date: DateTime(date.year, date.month, date.day),
       minutesFromMidnight: minutesFromMidnight,
+      endDate: endDate,
       notes: notes,
       shared: shared,
     );
@@ -97,6 +99,7 @@ class MockCalendarRepository implements CalendarRepository {
       title: source.title,
       date: source.date,
       minutesFromMidnight: source.minutesFromMidnight,
+      endDate: source.endDate,
       notes: source.notes,
       copiedFromId: source.id,
     );

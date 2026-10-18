@@ -8,6 +8,7 @@ class CalendarEvent {
     required this.title,
     required this.date,
     this.minutesFromMidnight,
+    this.endDate,
     this.notes = '',
     this.shared = false,
     this.copiedFromId,
@@ -30,7 +31,26 @@ class CalendarEvent {
   /// can show it is already on the user's calendar.
   final String? copiedFromId;
 
+  /// Last calendar day of a multi-day event; null means a single day.
+  DateTime? endDate;
+
   bool get allDay => minutesFromMidnight == null;
+
+  /// The final day the event covers (the start day when there is no end date).
+  DateTime get lastDay {
+    final e = endDate;
+    if (e == null) return date;
+    final end = DateTime(e.year, e.month, e.day);
+    return end.isBefore(date) ? date : end;
+  }
+
+  bool get multiDay => lastDay != date;
+
+  /// Whether the event is happening on [day] (any time of day).
+  bool coversDay(DateTime day) {
+    final d = DateTime(day.year, day.month, day.day);
+    return !d.isBefore(date) && !d.isAfter(lastDay);
+  }
 
   String get timeLabel {
     final m = minutesFromMidnight;
