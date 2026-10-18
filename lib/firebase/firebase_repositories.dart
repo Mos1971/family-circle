@@ -796,6 +796,7 @@ class FirebaseCalendarRepository implements CalendarRepository {
     required DateTime date,
     int? minutesFromMidnight,
     DateTime? endDate,
+    int? endMinutes,
     String notes = '',
     required bool shared,
   }) {
@@ -807,6 +808,7 @@ class FirebaseCalendarRepository implements CalendarRepository {
       date: DateTime(date.year, date.month, date.day),
       minutesFromMidnight: minutesFromMidnight,
       endDate: endDate,
+      endMinutes: endMinutes,
       notes: notes,
       shared: shared,
     );
@@ -854,6 +856,7 @@ class FirebaseCalendarRepository implements CalendarRepository {
       date: source.date,
       minutesFromMidnight: source.minutesFromMidnight,
       endDate: source.endDate,
+      endMinutes: source.endMinutes,
       notes: source.notes,
       copiedFromId: source.id,
     );

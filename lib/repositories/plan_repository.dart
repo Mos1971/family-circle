@@ -16,6 +16,7 @@ abstract class CalendarRepository {
     required DateTime date,
     int? minutesFromMidnight,
     DateTime? endDate,
+    int? endMinutes,
     String notes = '',
     required bool shared,
   });

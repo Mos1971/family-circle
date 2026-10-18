@@ -267,6 +267,7 @@ Map<String, dynamic> eventToMap(CalendarEvent e) => {
   'notes': e.notes,
   'date': Timestamp.fromDate(e.date),
   'minutesFromMidnight': e.minutesFromMidnight,
+  'endMinutes': e.endMinutes,
   'endDate': e.endDate == null ? null : Timestamp.fromDate(e.endDate!),
   'shared': e.shared,
   'copiedFromId': e.copiedFromId,
@@ -282,6 +283,7 @@ CalendarEvent eventFromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
     notes: m['notes'] ?? '',
     date: DateTime(date.year, date.month, date.day),
     minutesFromMidnight: m['minutesFromMidnight'] as int?,
+    endMinutes: m['endMinutes'] as int?,
     endDate: m['endDate'] is Timestamp
         ? DateTime(
             (m['endDate'] as Timestamp).toDate().year,

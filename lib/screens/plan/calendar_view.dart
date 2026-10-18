@@ -436,6 +436,7 @@ Future<void> showEventEditor(
   var pickedDate = date;
   DateTime? pickedEnd;
   TimeOfDay? pickedTime;
+  TimeOfDay? pickedEndTime;
   var isShared = shared;
 
   return showModalBottomSheet(
@@ -552,6 +553,37 @@ Future<void> showEventEditor(
                       ),
                   ],
                 ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.schedule, size: 18),
+                        label: Text(
+                          pickedEndTime == null
+                              ? 'End time (optional)'
+                              : 'Ends ${pickedEndTime!.format(ctx)}',
+                        ),
+                        onPressed: () async {
+                          final t = await showTimePicker(
+                            context: ctx,
+                            initialTime:
+                                pickedEndTime ??
+                                pickedTime ??
+                                const TimeOfDay(hour: 12, minute: 0),
+                          );
+                          if (t != null) setSheet(() => pickedEndTime = t);
+                        },
+                      ),
+                    ),
+                    if (pickedEndTime != null)
+                      IconButton(
+                        tooltip: 'Remove end time',
+                        icon: const Icon(Icons.close),
+                        onPressed: () => setSheet(() => pickedEndTime = null),
+                      ),
+                  ],
+                ),
                 if (pickedTime != null)
                   Align(
                     alignment: Alignment.centerLeft,
@@ -587,6 +619,9 @@ Future<void> showEventEditor(
                         endDate: pickedEnd == null || pickedEnd == pickedDate
                             ? null
                             : pickedEnd,
+                        endMinutes: pickedEndTime == null
+                            ? null
+                            : pickedEndTime!.hour * 60 + pickedEndTime!.minute,
                         minutesFromMidnight: pickedTime == null
                             ? null
                             : pickedTime!.hour * 60 + pickedTime!.minute,

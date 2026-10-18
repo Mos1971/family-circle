@@ -42,6 +42,7 @@ class CalendarProvider extends ChangeNotifier {
     required DateTime date,
     int? minutesFromMidnight,
     DateTime? endDate,
+    int? endMinutes,
     String notes = '',
     required bool shared,
   }) => _repo.add(
@@ -50,6 +51,7 @@ class CalendarProvider extends ChangeNotifier {
     date: date,
     minutesFromMidnight: minutesFromMidnight,
     endDate: endDate,
+    endMinutes: endMinutes,
     notes: notes,
     shared: shared,
   );

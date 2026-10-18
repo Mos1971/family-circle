@@ -9,6 +9,7 @@ class CalendarEvent {
     required this.date,
     this.minutesFromMidnight,
     this.endDate,
+    this.endMinutes,
     this.notes = '',
     this.shared = false,
     this.copiedFromId,
@@ -34,6 +35,9 @@ class CalendarEvent {
   /// Last calendar day of a multi-day event; null means a single day.
   DateTime? endDate;
 
+  /// End time as minutes after midnight (on the last day); null if not set.
+  int? endMinutes;
+
   bool get allDay => minutesFromMidnight == null;
 
   /// The final day the event covers (the start day when there is no end date).
@@ -52,12 +56,19 @@ class CalendarEvent {
     return !d.isBefore(date) && !d.isAfter(lastDay);
   }
 
-  String get timeLabel {
-    final m = minutesFromMidnight;
-    if (m == null) return 'All day';
+  static String _fmt(int m) {
     final h = m ~/ 60;
     final mm = (m % 60).toString().padLeft(2, '0');
     final h12 = h % 12 == 0 ? 12 : h % 12;
     return '$h12:$mm ${h < 12 ? 'AM' : 'PM'}';
+  }
+
+  String get timeLabel {
+    final s = minutesFromMidnight;
+    final e = endMinutes;
+    if (s == null && e == null) return 'All day';
+    if (s == null) return 'Until ${_fmt(e!)}';
+    if (e == null) return _fmt(s);
+    return '${_fmt(s)} – ${_fmt(e)}';
   }
 }
