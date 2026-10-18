@@ -56,6 +56,27 @@ class CalendarProvider extends ChangeNotifier {
     shared: shared,
   );
 
+  /// Changes an event. Only its owner may; [userId] is checked.
+  void update(
+    String eventId,
+    String userId, {
+    required String title,
+    required String notes,
+    required DateTime date,
+    DateTime? endDate,
+    int? minutesFromMidnight,
+    int? endMinutes,
+  }) => _repo.update(
+    eventId,
+    userId,
+    title: title,
+    notes: notes,
+    date: date,
+    endDate: endDate,
+    minutesFromMidnight: minutesFromMidnight,
+    endMinutes: endMinutes,
+  );
+
   void delete(String eventId, String userId) => _repo.delete(eventId, userId);
   CalendarEvent copyToPrivate(String eventId, String userId) =>
       _repo.copyToPrivate(eventId, userId);

@@ -831,6 +831,33 @@ class FirebaseCalendarRepository implements CalendarRepository {
   }
 
   @override
+  void update(
+    String eventId,
+    String requestingUserId, {
+    required String title,
+    required String notes,
+    required DateTime date,
+    DateTime? endDate,
+    int? minutesFromMidnight,
+    int? endMinutes,
+  }) {
+    final e = getById(eventId);
+    if (e == null || e.ownerId != requestingUserId) return;
+    final day = DateTime(date.year, date.month, date.day);
+    _write(
+      _doc(eventId).update({
+        'title': title,
+        'notes': notes,
+        'date': Timestamp.fromDate(day),
+        'endDate': endDate == null ? null : Timestamp.fromDate(endDate),
+        'minutesFromMidnight': minutesFromMidnight,
+        'endMinutes': endMinutes,
+      }),
+      'edit event',
+    );
+  }
+
+  @override
   void delete(String eventId, String requestingUserId) {
     final event = getById(eventId);
     if (event == null) return;

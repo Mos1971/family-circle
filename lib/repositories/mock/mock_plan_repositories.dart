@@ -76,6 +76,28 @@ class MockCalendarRepository implements CalendarRepository {
   }
 
   @override
+  void update(
+    String eventId,
+    String requestingUserId, {
+    required String title,
+    required String notes,
+    required DateTime date,
+    DateTime? endDate,
+    int? minutesFromMidnight,
+    int? endMinutes,
+  }) {
+    final e = getById(eventId);
+    if (e == null || e.ownerId != requestingUserId) return;
+    e.title = title;
+    e.notes = notes;
+    e.date = DateTime(date.year, date.month, date.day);
+    e.endDate = endDate;
+    e.minutesFromMidnight = minutesFromMidnight;
+    e.endMinutes = endMinutes;
+    _backend.calendarChanges.add(null);
+  }
+
+  @override
   void delete(String eventId, String requestingUserId) {
     final event = getById(eventId);
     if (event == null) return;

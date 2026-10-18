@@ -422,22 +422,29 @@ class _EventTile extends StatelessWidget {
   }
 }
 
-/// Bottom sheet for adding an event. [shared] picks the starting audience.
+TimeOfDay? _timeOf(int? minutes) =>
+    minutes == null ? null : TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60);
+
+/// Bottom sheet for adding an event, or editing [existing] (only its owner
+/// can). [shared] picks the starting audience for a new event.
 Future<void> showEventEditor(
   BuildContext context, {
-  required DateTime date,
-  required bool shared,
+  DateTime? date,
+  bool shared = false,
+  CalendarEvent? existing,
 }) {
   final me = context.read<AuthProvider>().currentUser;
   if (me == null) return Future.value();
+  if (existing != null && existing.ownerId != me.id) return Future.value();
   final cal = context.read<CalendarProvider>();
-  final title = TextEditingController();
-  final notes = TextEditingController();
-  var pickedDate = date;
-  DateTime? pickedEnd;
-  TimeOfDay? pickedTime;
-  TimeOfDay? pickedEndTime;
-  var isShared = shared;
+  final editing = existing != null;
+  final title = TextEditingController(text: existing?.title ?? '');
+  final notes = TextEditingController(text: existing?.notes ?? '');
+  var pickedDate = existing?.date ?? date ?? DateTime.now();
+  DateTime? pickedEnd = existing?.endDate;
+  TimeOfDay? pickedTime = _timeOf(existing?.minutesFromMidnight);
+  TimeOfDay? pickedEndTime = _timeOf(existing?.endMinutes);
+  var isShared = existing?.shared ?? shared;
 
   return showModalBottomSheet(
     context: context,
@@ -457,11 +464,14 @@ Future<void> showEventEditor(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('New event', style: Theme.of(ctx).textTheme.titleLarge),
+                Text(
+                  editing ? 'Edit event' : 'New event',
+                  style: Theme.of(ctx).textTheme.titleLarge,
+                ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: title,
-                  autofocus: true,
+                  autofocus: !editing,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(
                     hintText: 'What\'s happening?',
@@ -591,18 +601,19 @@ Future<void> showEventEditor(
                         ),
                     ],
                   ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Show on the family calendar'),
-                  subtitle: Text(
-                    isShared
-                        ? 'Everyone in Family Circle can see this.'
-                        : 'Only you can see this.',
-                    style: TextStyle(fontSize: 12, color: AppColors.muted),
+                if (!editing)
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Show on the family calendar'),
+                    subtitle: Text(
+                      isShared
+                          ? 'Everyone in Family Circle can see this.'
+                          : 'Only you can see this.',
+                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    ),
+                    value: isShared,
+                    onChanged: (v) => setSheet(() => isShared = v),
                   ),
-                  value: isShared,
-                  onChanged: (v) => setSheet(() => isShared = v),
-                ),
                 const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
@@ -610,25 +621,42 @@ Future<void> showEventEditor(
                     onPressed: () {
                       final t = title.text.trim();
                       if (t.isEmpty) return;
-                      cal.add(
-                        ownerId: me.id,
-                        title: t,
-                        notes: notes.text.trim(),
-                        date: pickedDate,
-                        endDate: pickedEnd == null || pickedEnd == pickedDate
-                            ? null
-                            : pickedEnd,
-                        endMinutes: pickedEndTime == null
-                            ? null
-                            : pickedEndTime!.hour * 60 + pickedEndTime!.minute,
-                        minutesFromMidnight: pickedTime == null
-                            ? null
-                            : pickedTime!.hour * 60 + pickedTime!.minute,
-                        shared: isShared,
-                      );
+                      final endDate =
+                          pickedEnd == null || pickedEnd == pickedDate
+                          ? null
+                          : pickedEnd;
+                      final endMinutes = pickedEndTime == null
+                          ? null
+                          : pickedEndTime!.hour * 60 + pickedEndTime!.minute;
+                      final startMinutes = pickedTime == null
+                          ? null
+                          : pickedTime!.hour * 60 + pickedTime!.minute;
+                      if (existing != null) {
+                        cal.update(
+                          existing.id,
+                          me.id,
+                          title: t,
+                          notes: notes.text.trim(),
+                          date: pickedDate,
+                          endDate: endDate,
+                          minutesFromMidnight: startMinutes,
+                          endMinutes: endMinutes,
+                        );
+                      } else {
+                        cal.add(
+                          ownerId: me.id,
+                          title: t,
+                          notes: notes.text.trim(),
+                          date: pickedDate,
+                          endDate: endDate,
+                          endMinutes: endMinutes,
+                          minutesFromMidnight: startMinutes,
+                          shared: isShared,
+                        );
+                      }
                       Navigator.of(sheetContext).pop();
                     },
-                    child: const Text('Save event'),
+                    child: Text(editing ? 'Save changes' : 'Save event'),
                   ),
                 ),
               ],
@@ -694,6 +722,16 @@ Future<void> showEventDetails(BuildContext context, String eventId) {
                 Text(e.notes),
               ],
               const SizedBox(height: 18),
+              if (mineOwned)
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Edit event'),
+                  onPressed: () {
+                    close();
+                    showEventEditor(context, existing: e);
+                  },
+                ),
+              if (mineOwned) const SizedBox(height: 8),
               if (e.shared && !mineOwned)
                 OutlinedButton.icon(
                   icon: Icon(

@@ -21,6 +21,18 @@ abstract class CalendarRepository {
     required bool shared,
   });
 
+  /// Only the owner may change an event.
+  void update(
+    String eventId,
+    String requestingUserId, {
+    required String title,
+    required String notes,
+    required DateTime date,
+    DateTime? endDate,
+    int? minutesFromMidnight,
+    int? endMinutes,
+  });
+
   /// Only the owner (or an admin, for shared events) may delete.
   void delete(String eventId, String requestingUserId);
 
