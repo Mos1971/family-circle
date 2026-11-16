@@ -263,6 +263,32 @@ service cloud.firestore {
               || (resource.data.shared == true && adminOf(cid)));
       }
 
+      // ---- contacts ------------------------------------------------------
+      // Private to the owner unless they share the contact with the family.
+      match /contacts/{id} {
+        allow read: if (inCircle(cid) && resource.data.shared == true)
+          || (signedIn() && resource.data.ownerId == request.auth.uid);
+        allow create: if inCircle(cid)
+          && request.resource.data.ownerId == request.auth.uid
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 200
+          && request.resource.data.get('phone', '').size() <= 100
+          && request.resource.data.get('address', '').size() <= 500
+          && request.resource.data.get('notes', '').size() <= 5000;
+        allow update: if inCircle(cid) && resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 200
+          && request.resource.data.get('phone', '').size() <= 100
+          && request.resource.data.get('address', '').size() <= 500
+          && request.resource.data.get('notes', '').size() <= 5000;
+        allow delete: if inCircle(cid)
+          && (resource.data.ownerId == request.auth.uid
+              || (resource.data.shared == true && adminOf(cid)));
+      }
+
       // ---- to-do lists ---------------------------------------------------
       // 'members' = owner + the people the list is shared with.
       match /todoLists/{id} {

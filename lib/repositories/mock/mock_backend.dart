@@ -6,6 +6,7 @@ import '../../models/announcement.dart';
 import '../../models/app_notification.dart';
 import '../../models/calendar_event.dart';
 import '../../models/comment.dart';
+import '../../models/contact.dart';
 import '../../models/direct_message.dart';
 import '../../models/notification_prefs.dart';
 import '../../models/post.dart';
@@ -37,6 +38,7 @@ class MockBackend {
   final List<Chat> chats = [];
   final List<CalendarEvent> events = [];
   final List<TodoList> todoLists = [];
+  final List<Contact> contacts = [];
   final Map<String, NotificationPrefs> prefsByUserId = {};
 
   String? currentUserId;
@@ -48,6 +50,7 @@ class MockBackend {
   final messageChanges = StreamController<void>.broadcast();
   final calendarChanges = StreamController<void>.broadcast();
   final todoChanges = StreamController<void>.broadcast();
+  final contactChanges = StreamController<void>.broadcast();
   final authChanges = StreamController<AppUser?>.broadcast();
 
   AppUser? get currentUser =>

@@ -8,6 +8,7 @@ import '../models/app_notification.dart';
 import '../models/calendar_event.dart';
 import '../models/circle.dart';
 import '../models/comment.dart';
+import '../models/contact.dart';
 import '../models/direct_message.dart';
 import '../models/notification_prefs.dart';
 import '../models/post.dart';
@@ -17,6 +18,7 @@ import '../models/todo.dart';
 import '../models/user.dart';
 import '../repositories/admin_repository.dart';
 import '../repositories/announcement_repository.dart';
+import '../repositories/contact_repository.dart';
 import '../repositories/conversation_logic.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/feed_repository.dart';
@@ -1021,4 +1023,90 @@ class FirebaseTodoRepository implements TodoRepository {
 
   @override
   Stream<void> get changes => _b.todoChanges.stream;
+}
+
+class FirebaseContactRepository implements ContactRepository {
+  FirebaseContactRepository(this._b);
+  final FirebaseBackend _b;
+
+  DocumentReference<Json> _doc(String id) => _b.col('contacts').doc(id);
+
+  @override
+  List<Contact> getFor(String userId) {
+    final list = _b.contacts
+        .where((c) => c.shared || c.ownerId == userId)
+        .toList();
+    list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return list;
+  }
+
+  @override
+  Contact? getById(String id) {
+    for (final c in _b.contacts) {
+      if (c.id == id) return c;
+    }
+    return null;
+  }
+
+  @override
+  Contact add({
+    required String ownerId,
+    required String name,
+    String phone = '',
+    String address = '',
+    String notes = '',
+    required bool shared,
+  }) {
+    final ref = _b.col('contacts').doc();
+    final contact = Contact(
+      id: ref.id,
+      ownerId: ownerId,
+      name: name,
+      phone: phone,
+      address: address,
+      notes: notes,
+      shared: shared,
+    );
+    _write(ref.set(contactToMap(contact)), 'add contact');
+    return contact;
+  }
+
+  @override
+  void update(
+    String contactId,
+    String requestingUserId, {
+    required String name,
+    required String phone,
+    required String address,
+    required String notes,
+    required bool shared,
+  }) {
+    final c = getById(contactId);
+    if (c == null || c.ownerId != requestingUserId) return;
+    _write(
+      _doc(contactId).update({
+        'name': name,
+        'phone': phone,
+        'address': address,
+        'notes': notes,
+        'shared': shared,
+      }),
+      'edit contact',
+    );
+  }
+
+  @override
+  void delete(String contactId, String requestingUserId) {
+    final c = getById(contactId);
+    if (c == null) return;
+    final requester = _b.userById(requestingUserId);
+    final allowed =
+        c.ownerId == requestingUserId ||
+        (c.shared && (requester?.isAdmin ?? false));
+    if (!allowed) return;
+    _write(_doc(contactId).delete(), 'delete contact');
+  }
+
+  @override
+  Stream<void> get changes => _b.contactChanges.stream;
 }

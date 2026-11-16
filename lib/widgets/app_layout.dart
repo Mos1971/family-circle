@@ -122,6 +122,12 @@ const _items = [
     Icons.checklist_outlined,
     Icons.checklist,
   ),
+  _NavItem(
+    '/plan?tab=contacts',
+    'Contacts',
+    Icons.contacts_outlined,
+    Icons.contacts,
+  ),
   _NavItem('/family', 'Family', Icons.groups_outlined, Icons.groups),
   _NavItem('/profile', 'Profile', Icons.person_outline, Icons.person),
 ];
@@ -136,6 +142,7 @@ class _Sidebar extends StatelessWidget {
     if (location.startsWith('/lists') || location.contains('tab=lists')) {
       return '/plan?tab=lists';
     }
+    if (location.contains('tab=contacts')) return '/plan?tab=contacts';
     if (location.startsWith('/members')) return '/family';
     if (location.startsWith('/announcements')) return '/profile';
     for (final i in _items) {

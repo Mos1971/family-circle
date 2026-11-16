@@ -140,9 +140,11 @@ class AppRouter {
                     GoRoute(
                       path: '/plan',
                       builder: (c, s) => PlanScreen(
-                        initialTab: s.uri.queryParameters['tab'] == 'lists'
-                            ? 1
-                            : 0,
+                        initialTab: switch (s.uri.queryParameters['tab']) {
+                          'lists' => 1,
+                          'contacts' => 2,
+                          _ => 0,
+                        },
                         nonce: s.uri.queryParameters['t'],
                       ),
                     ),

@@ -10,6 +10,7 @@ import '../models/notification_prefs.dart';
 import '../models/post.dart';
 import '../models/reaction.dart';
 import '../models/report.dart';
+import '../models/contact.dart';
 import '../models/todo.dart';
 import '../models/user.dart';
 
@@ -293,6 +294,30 @@ CalendarEvent eventFromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
         : null,
     shared: m['shared'] ?? false,
     copiedFromId: m['copiedFromId'],
+  );
+}
+
+// ---- Contacts -------------------------------------------------------------
+
+Map<String, dynamic> contactToMap(Contact c) => {
+  'ownerId': c.ownerId,
+  'name': c.name,
+  'phone': c.phone,
+  'address': c.address,
+  'notes': c.notes,
+  'shared': c.shared,
+};
+
+Contact contactFromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
+  final m = d.data()!;
+  return Contact(
+    id: d.id,
+    ownerId: m['ownerId'] ?? '',
+    name: m['name'] ?? '',
+    phone: m['phone'] ?? '',
+    address: m['address'] ?? '',
+    notes: m['notes'] ?? '',
+    shared: m['shared'] ?? false,
   );
 }
 

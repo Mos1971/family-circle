@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'calendar_view.dart';
+import 'contacts_view.dart';
 import 'lists_view.dart';
 
-/// "Plan" tab: the shared/private calendar and the to-do lists.
+/// "Plan" tab: the shared/private calendar, the to-do lists and contacts.
 ///
-/// [initialTab] is 0 for Calendar and 1 for Lists. Shortcuts such as
+/// [initialTab] is 0 for Calendar, 1 for Lists and 2 for Contacts. Shortcuts such as
 /// "/plan?tab=lists" change it while this screen is already alive, so it
 /// follows changes instead of only reading it once.
 class PlanScreen extends StatefulWidget {
@@ -29,16 +30,16 @@ class _PlanScreenState extends State<PlanScreen>
   void initState() {
     super.initState();
     _controller = TabController(
-      length: 2,
+      length: 3,
       vsync: this,
-      initialIndex: widget.initialTab.clamp(0, 1),
+      initialIndex: widget.initialTab.clamp(0, 2),
     );
   }
 
   @override
   void didUpdateWidget(PlanScreen old) {
     super.didUpdateWidget(old);
-    final target = widget.initialTab.clamp(0, 1);
+    final target = widget.initialTab.clamp(0, 2);
     final requested = target != old.initialTab || widget.nonce != old.nonce;
     if (requested && target != _controller.index) {
       _controller.animateTo(target);
@@ -61,12 +62,13 @@ class _PlanScreenState extends State<PlanScreen>
           tabs: const [
             Tab(text: 'Calendar'),
             Tab(text: 'Lists'),
+            Tab(text: 'Contacts'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _controller,
-        children: const [CalendarView(), ListsView()],
+        children: const [CalendarView(), ListsView(), ContactsView()],
       ),
     );
   }
