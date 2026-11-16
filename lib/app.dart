@@ -9,6 +9,7 @@ import 'firebase/firebase_repositories.dart';
 import 'providers/admin_provider.dart';
 import 'providers/announcement_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/contact_provider.dart';
 import 'providers/external_calendar_provider.dart';
 import 'providers/feed_provider.dart';
 import 'providers/message_provider.dart';
@@ -22,6 +23,7 @@ import 'repositories/mock/mock_admin_repository.dart';
 import 'repositories/mock/mock_announcement_repository.dart';
 import 'repositories/mock/mock_auth_repository.dart';
 import 'repositories/mock/mock_backend.dart';
+import 'repositories/mock/mock_contact_repository.dart';
 import 'repositories/mock/mock_feed_repository.dart';
 import 'repositories/mock/mock_message_repository.dart';
 import 'repositories/mock/mock_notification_prefs_repository.dart';
@@ -31,6 +33,7 @@ import 'repositories/mock/mock_user_repository.dart';
 import 'repositories/admin_repository.dart';
 import 'repositories/announcement_repository.dart';
 import 'repositories/auth_repository.dart';
+import 'repositories/contact_repository.dart';
 import 'repositories/feed_repository.dart';
 import 'repositories/message_repository.dart';
 import 'repositories/notification_prefs_repository.dart';
@@ -66,6 +69,7 @@ class _Repos {
   final MessageRepository messages;
   final CalendarRepository calendar;
   final TodoRepository todos;
+  final ContactRepository contacts;
 }
 
 /// Root widget. Use [FamilyCircleApp.firebase] for the real app and
@@ -91,6 +95,7 @@ class FamilyCircleApp extends StatelessWidget {
         messages: FirebaseMessageRepository(fb),
         calendar: FirebaseCalendarRepository(fb),
         todos: FirebaseTodoRepository(fb),
+        contacts: FirebaseContactRepository(fb),
       );
     }
     final mock = context.read<MockBackend>();
@@ -105,6 +110,7 @@ class FamilyCircleApp extends StatelessWidget {
       messages: MockMessageRepository(mock),
       calendar: MockCalendarRepository(mock),
       todos: MockTodoRepository(mock),
+      contacts: MockContactRepository(mock),
     );
   }
 
@@ -146,6 +152,9 @@ class FamilyCircleApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (ctx) => TodoProvider(ctx.read<_Repos>().todos),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => ContactProvider(ctx.read<_Repos>().contacts),
         ),
         ChangeNotifierProvider(create: (_) => ExternalCalendarProvider()),
         ChangeNotifierProvider(create: (_) => ThemeModeProvider()),

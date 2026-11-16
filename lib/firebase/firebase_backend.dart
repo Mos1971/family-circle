@@ -11,6 +11,7 @@ import '../models/app_notification.dart';
 import '../models/calendar_event.dart';
 import '../models/circle.dart';
 import '../models/comment.dart';
+import '../models/contact.dart';
 import '../models/direct_message.dart';
 import '../models/notification_prefs.dart';
 import '../models/post.dart';
@@ -87,6 +88,8 @@ class FirebaseBackend {
   final Map<String, NotificationPrefs> prefsByUserId = {};
   List<CalendarEvent> _sharedEvents = [];
   List<CalendarEvent> _ownEvents = [];
+  List<Contact> _sharedContacts = [];
+  List<Contact> _ownContacts = [];
 
   /// The signed-in person's profile in the *active* circle.
   AppUser? currentUser;
@@ -105,6 +108,7 @@ class FirebaseBackend {
   final messageChanges = StreamController<void>.broadcast();
   final calendarChanges = StreamController<void>.broadcast();
   final todoChanges = StreamController<void>.broadcast();
+  final contactChanges = StreamController<void>.broadcast();
   final authChanges = StreamController<AppUser?>.broadcast();
 
   StreamSubscription<DocumentSnapshot<Json>>? _accountSub;
@@ -136,6 +140,15 @@ class FirebaseBackend {
     final byId = <String, CalendarEvent>{
       for (final e in _sharedEvents) e.id: e,
       for (final e in _ownEvents) e.id: e,
+    };
+    return byId.values.toList();
+  }
+
+  /// Contacts visible to the signed-in user (family-shared + own private).
+  List<Contact> get contacts {
+    final byId = <String, Contact>{
+      for (final c in _sharedContacts) c.id: c,
+      for (final c in _ownContacts) c.id: c,
     };
     return byId.values.toList();
   }
@@ -281,6 +294,8 @@ class FirebaseBackend {
     prefsByUserId.clear();
     _sharedEvents = [];
     _ownEvents = [];
+    _sharedContacts = [];
+    _ownContacts = [];
   }
 
   void _stopData() {
@@ -353,6 +368,14 @@ class FirebaseBackend {
       listen(col('events').where('ownerId', isEqualTo: id), (s) {
         _ownEvents = _safe(s, eventFromDoc).toList();
         calendarChanges.add(null);
+      });
+      listen(col('contacts').where('shared', isEqualTo: true), (s) {
+        _sharedContacts = _safe(s, contactFromDoc).toList();
+        contactChanges.add(null);
+      });
+      listen(col('contacts').where('ownerId', isEqualTo: id), (s) {
+        _ownContacts = _safe(s, contactFromDoc).toList();
+        contactChanges.add(null);
       });
       listen(col('todoLists').where('members', arrayContains: id), (s) {
         todoLists
