@@ -15,6 +15,16 @@ class UserProvider extends ChangeNotifier {
   List<CircleRef> get myCircles => _repo.myCircles;
   void switchCircle(String id) => _repo.switchCircle(id);
 
+  /// Returns null on success, otherwise a readable error message.
+  Future<String?> leaveCircle(String id) async {
+    try {
+      await _repo.leaveCircle(id);
+      return null;
+    } catch (e) {
+      return e.toString().replaceFirst('Exception: ', '');
+    }
+  }
+
   Future<void> addCircle({
     required String firstName,
     required String familyName,

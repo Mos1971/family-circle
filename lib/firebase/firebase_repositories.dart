@@ -170,6 +170,17 @@ class FirebaseUserRepository implements UserRepository {
       _write(_b.switchCircle(circleId), 'switch circle');
 
   @override
+  Future<void> leaveCircle(String circleId) async {
+    try {
+      await _b.leaveCircle(circleId);
+    } on FirebaseException catch (e) {
+      throw Exception(
+        "We couldn't leave that circle (${e.code}). Please try again.",
+      );
+    }
+  }
+
+  @override
   Future<void> addCircle({
     required String firstName,
     required String familyName,

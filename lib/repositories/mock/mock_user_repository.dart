@@ -18,6 +18,11 @@ class MockUserRepository implements UserRepository {
   void switchCircle(String circleId) {}
 
   @override
+  Future<void> leaveCircle(String circleId) async {
+    throw Exception("You can't leave your only circle.");
+  }
+
+  @override
   Future<void> addCircle({
     required String firstName,
     required String familyName,

@@ -9,6 +9,10 @@ abstract class UserRepository {
   List<CircleRef> get myCircles;
   void switchCircle(String circleId);
 
+  /// Leaves a circle (deleting what the person created in it). Throws an
+  /// [Exception] with a readable message if that isn't allowed.
+  Future<void> leaveCircle(String circleId);
+
   /// Join (invite code) or start (licence code) another circle.
   Future<void> addCircle({
     required String firstName,

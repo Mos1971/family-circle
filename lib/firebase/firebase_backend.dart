@@ -699,34 +699,7 @@ class FirebaseBackend {
 
     // 2. Don't leave a circle without an admin while others are still in it.
     for (final cid in circleIds) {
-      final members = db.collection('circles').doc(cid).collection('members');
-      final mine = await members.doc(me).get();
-      final d = mine.data();
-      if (d == null || d['role'] != 'admin' || d['status'] != 'approved') {
-        continue;
-      }
-      final all = await members.get();
-      var otherAdmins = 0;
-      var others = 0;
-      for (final m in all.docs) {
-        if (m.id == me) continue;
-        others++;
-        if (m.data()['role'] == 'admin' && m.data()['status'] == 'approved') {
-          otherAdmins++;
-        }
-      }
-      if (others > 0 && otherAdmins == 0) {
-        final name =
-            myCircles
-                .where((c) => c.id == cid)
-                .map((c) => c.name)
-                .firstOrNull ??
-            'your circle';
-        throw Exception(
-          'You are the only admin of "$name". Make another member an admin '
-          'first (or remove the other members), then delete your account.',
-        );
-      }
+      await _assertNotSoleAdmin(cid, me, 'delete your account');
     }
 
     // 3. Stop listening so nothing reacts while data disappears.
@@ -737,52 +710,7 @@ class FirebaseBackend {
 
     // 4. Delete what they created in each circle, then their membership.
     for (final cid in circleIds) {
-      final circle = db.collection('circles').doc(cid);
-      await _deleteWhere(circle.collection('posts'), 'authorId', me);
-      await _deleteWhere(circle.collection('comments'), 'authorId', me);
-      await _deleteWhere(circle.collection('events'), 'ownerId', me);
-      await _deleteWhere(circle.collection('contacts'), 'ownerId', me);
-      await _deleteWhere(circle.collection('notifications'), 'userId', me);
-
-      // To-do lists: delete the ones they own.
-      await _safely(() async {
-        final lists = await circle
-            .collection('todoLists')
-            .where('members', arrayContains: me)
-            .get();
-        await _deleteDocs(
-          lists.docs
-              .where((d) => d.data()['ownerId'] == me)
-              .map((d) => d.reference),
-        );
-      });
-
-      // Messages they sent, and leave any group chats.
-      await _safely(() async {
-        final msgs = await circle
-            .collection('messages')
-            .where('participants', arrayContains: me)
-            .get();
-        await _deleteDocs(
-          msgs.docs
-              .where((d) => d.data()['senderId'] == me)
-              .map((d) => d.reference),
-        );
-      });
-      await _safely(() async {
-        final chats = await circle
-            .collection('chats')
-            .where('participants', arrayContains: me)
-            .get();
-        for (final c in chats.docs) {
-          await c.reference.update({
-            'participants': FieldValue.arrayRemove([me]),
-          });
-        }
-      });
-
-      // Their profile in the circle (must succeed).
-      await circle.collection('members').doc(me).delete();
+      await _purgeCircle(cid, me);
     }
 
     // 5. Their account record, devices, then the sign-in itself.
@@ -797,6 +725,109 @@ class FirebaseBackend {
       throw Exception(_deleteAuthMessage(e));
     }
     await auth.signOut();
+  }
+
+  /// Throws if [me] is the only admin of [cid] while other people remain.
+  Future<void> _assertNotSoleAdmin(String cid, String me, String action) async {
+    final members = db.collection('circles').doc(cid).collection('members');
+    final d = (await members.doc(me).get()).data();
+    if (d == null || d['role'] != 'admin' || d['status'] != 'approved') return;
+    final all = await members.get();
+    var otherAdmins = 0;
+    var others = 0;
+    for (final m in all.docs) {
+      if (m.id == me) continue;
+      others++;
+      if (m.data()['role'] == 'admin' && m.data()['status'] == 'approved') {
+        otherAdmins++;
+      }
+    }
+    if (others > 0 && otherAdmins == 0) {
+      final name =
+          myCircles.where((c) => c.id == cid).map((c) => c.name).firstOrNull ??
+          'your circle';
+      throw Exception(
+        'You are the only admin of "$name". Make another member an admin '
+        'first (or remove the other members), then $action.',
+      );
+    }
+  }
+
+  /// Deletes what [me] created in circle [cid], then their profile there.
+  Future<void> _purgeCircle(String cid, String me) async {
+    final circle = db.collection('circles').doc(cid);
+    await _deleteWhere(circle.collection('posts'), 'authorId', me);
+    await _deleteWhere(circle.collection('comments'), 'authorId', me);
+    await _deleteWhere(circle.collection('events'), 'ownerId', me);
+    await _deleteWhere(circle.collection('contacts'), 'ownerId', me);
+    await _deleteWhere(circle.collection('notifications'), 'userId', me);
+
+    // To-do lists: delete the ones they own.
+    await _safely(() async {
+      final lists = await circle
+          .collection('todoLists')
+          .where('members', arrayContains: me)
+          .get();
+      await _deleteDocs(
+        lists.docs
+            .where((d) => d.data()['ownerId'] == me)
+            .map((d) => d.reference),
+      );
+    });
+
+    // Messages they sent, and leave any group chats.
+    await _safely(() async {
+      final msgs = await circle
+          .collection('messages')
+          .where('participants', arrayContains: me)
+          .get();
+      await _deleteDocs(
+        msgs.docs
+            .where((d) => d.data()['senderId'] == me)
+            .map((d) => d.reference),
+      );
+    });
+    await _safely(() async {
+      final chats = await circle
+          .collection('chats')
+          .where('participants', arrayContains: me)
+          .get();
+      for (final c in chats.docs) {
+        await c.reference.update({
+          'participants': FieldValue.arrayRemove([me]),
+        });
+      }
+    });
+
+    // Their profile in the circle (must succeed).
+    await circle.collection('members').doc(me).delete();
+
+    // Their profile in the circle (must succeed).
+    await circle.collection('members').doc(me).delete();
+  }
+
+  /// Leaves one circle (deleting what they created in it) but keeps the
+  /// account and any other circles.
+  Future<void> leaveCircle(String cid) async {
+    final me = uid;
+    if (me == null) throw Exception('You are not signed in.');
+    if (myCircles.length < 2) {
+      throw Exception(
+        'This is your only circle. Join or start another circle first, or '
+        'use "Delete my account" to remove everything.',
+      );
+    }
+    await _assertNotSoleAdmin(cid, me, 'leave');
+    // Move off this circle first so nothing is listening while it empties.
+    if (_activeCircleId == cid) {
+      final other = myCircles.firstWhere((c) => c.id != cid).id;
+      await switchCircle(other);
+    }
+    await _purgeCircle(cid, me);
+    await db.collection('users').doc(me).update({
+      'circleIds': FieldValue.arrayRemove([cid]),
+      'circleNames.$cid': FieldValue.delete(),
+    });
   }
 
   String _deleteAuthMessage(FirebaseAuthException e) {
