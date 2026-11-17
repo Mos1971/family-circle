@@ -61,6 +61,26 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> deleteAccount({required String password}) async {
+    final me = _backend.currentUser;
+    if (me == null) return;
+    _backend.posts.removeWhere((p) => p.authorId == me.id);
+    _backend.comments.removeWhere((c) => c.authorId == me.id);
+    _backend.events.removeWhere((e) => e.ownerId == me.id);
+    _backend.contacts.removeWhere((c) => c.ownerId == me.id);
+    _backend.todoLists.removeWhere((l) => l.ownerId == me.id);
+    _backend.notifications.removeWhere((n) => n.userId == me.id);
+    _backend.users.removeWhere((u) => u.id == me.id);
+    _backend.currentUserId = null;
+    _backend.feedChanges.add(null);
+    _backend.calendarChanges.add(null);
+    _backend.contactChanges.add(null);
+    _backend.todoChanges.add(null);
+    _backend.userChanges.add(null);
+    _backend.authChanges.add(null);
+  }
+
+  @override
   Future<void> sendPasswordReset(String email) async {}
 
   @override

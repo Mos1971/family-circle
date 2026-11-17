@@ -66,6 +66,16 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> logout() => _repo.logout();
 
+  /// Returns null on success, otherwise a readable error message.
+  Future<String?> deleteAccount(String password) async {
+    try {
+      await _repo.deleteAccount(password: password);
+      return null;
+    } catch (e) {
+      return e.toString().replaceFirst('Exception: ', '');
+    }
+  }
+
   Future<void> sendPasswordReset(String email) =>
       _repo.sendPasswordReset(email);
 

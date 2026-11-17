@@ -663,6 +663,185 @@ class FirebaseBackend {
 
   Future<void> logout() => auth.signOut();
 
+  /// Deletes everything this person created, leaves every circle, removes
+  /// their account record and finally the sign-in itself.
+  ///
+  /// Throws an [Exception] with a readable message (before anything is
+  /// deleted) if the password is wrong or they are the only admin of a circle
+  /// that still has other members.
+  Future<void> deleteAccount(String password) async {
+    final user = auth.currentUser;
+    final me = user?.uid;
+    if (user == null || me == null) throw Exception('You are not signed in.');
+
+    // 1. Re-confirm who they are (also required by Firebase for deletion).
+    try {
+      await user.reauthenticateWithCredential(
+        EmailAuthProvider.credential(
+          email: user.email ?? '',
+          password: password,
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password' ||
+          e.code == 'invalid-credential' ||
+          e.code == 'invalid-login-credentials') {
+        throw Exception('That password isn\'t right.');
+      }
+      throw Exception(_deleteAuthMessage(e));
+    }
+
+    final accountRef = db.collection('users').doc(me);
+    final account = await accountRef.get();
+    final circleIds = List<String>.from(
+      (account.data()?['circleIds'] as List?) ?? const [],
+    );
+
+    // 2. Don't leave a circle without an admin while others are still in it.
+    for (final cid in circleIds) {
+      final members = db.collection('circles').doc(cid).collection('members');
+      final mine = await members.doc(me).get();
+      final d = mine.data();
+      if (d == null || d['role'] != 'admin' || d['status'] != 'approved') {
+        continue;
+      }
+      final all = await members.get();
+      var otherAdmins = 0;
+      var others = 0;
+      for (final m in all.docs) {
+        if (m.id == me) continue;
+        others++;
+        if (m.data()['role'] == 'admin' && m.data()['status'] == 'approved') {
+          otherAdmins++;
+        }
+      }
+      if (others > 0 && otherAdmins == 0) {
+        final name =
+            myCircles
+                .where((c) => c.id == cid)
+                .map((c) => c.name)
+                .firstOrNull ??
+            'your circle';
+        throw Exception(
+          'You are the only admin of "$name". Make another member an admin '
+          'first (or remove the other members), then delete your account.',
+        );
+      }
+    }
+
+    // 3. Stop listening so nothing reacts while data disappears.
+    await push.unregister();
+    await _accountSub?.cancel();
+    _accountSub = null;
+    _teardownCircle();
+
+    // 4. Delete what they created in each circle, then their membership.
+    for (final cid in circleIds) {
+      final circle = db.collection('circles').doc(cid);
+      await _deleteWhere(circle.collection('posts'), 'authorId', me);
+      await _deleteWhere(circle.collection('comments'), 'authorId', me);
+      await _deleteWhere(circle.collection('events'), 'ownerId', me);
+      await _deleteWhere(circle.collection('contacts'), 'ownerId', me);
+      await _deleteWhere(circle.collection('notifications'), 'userId', me);
+
+      // To-do lists: delete the ones they own.
+      await _safely(() async {
+        final lists = await circle
+            .collection('todoLists')
+            .where('members', arrayContains: me)
+            .get();
+        await _deleteDocs(
+          lists.docs
+              .where((d) => d.data()['ownerId'] == me)
+              .map((d) => d.reference),
+        );
+      });
+
+      // Messages they sent, and leave any group chats.
+      await _safely(() async {
+        final msgs = await circle
+            .collection('messages')
+            .where('participants', arrayContains: me)
+            .get();
+        await _deleteDocs(
+          msgs.docs
+              .where((d) => d.data()['senderId'] == me)
+              .map((d) => d.reference),
+        );
+      });
+      await _safely(() async {
+        final chats = await circle
+            .collection('chats')
+            .where('participants', arrayContains: me)
+            .get();
+        for (final c in chats.docs) {
+          await c.reference.update({
+            'participants': FieldValue.arrayRemove([me]),
+          });
+        }
+      });
+
+      // Their profile in the circle (must succeed).
+      await circle.collection('members').doc(me).delete();
+    }
+
+    // 5. Their account record, devices, then the sign-in itself.
+    await _safely(() async {
+      final devices = await accountRef.collection('devices').get();
+      await _deleteDocs(devices.docs.map((d) => d.reference));
+    });
+    await accountRef.delete();
+    try {
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_deleteAuthMessage(e));
+    }
+    await auth.signOut();
+  }
+
+  String _deleteAuthMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait a moment and try again.';
+      case 'network-request-failed':
+        return 'No connection. Check your internet and try again.';
+      case 'requires-recent-login':
+        return 'Please log out, log in again, and then delete your account.';
+      default:
+        return e.message ?? 'Something went wrong. Please try again.';
+    }
+  }
+
+  /// Runs [action], logging (not throwing) any failure so one stubborn
+  /// collection can't stop the rest of an account deletion.
+  Future<void> _safely(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (e) {
+      debugPrint('Account deletion step failed: $e');
+    }
+  }
+
+  Future<void> _deleteWhere(
+    CollectionReference<Json> collection,
+    String field,
+    String value,
+  ) => _safely(() async {
+    final snap = await collection.where(field, isEqualTo: value).get();
+    await _deleteDocs(snap.docs.map((d) => d.reference));
+  });
+
+  Future<void> _deleteDocs(Iterable<DocumentReference<Json>> refs) async {
+    final list = refs.toList();
+    for (var i = 0; i < list.length; i += 400) {
+      final batch = db.batch();
+      for (final r in list.skip(i).take(400)) {
+        batch.delete(r);
+      }
+      await batch.commit();
+    }
+  }
+
   // ---- Shared write helpers ----------------------------------------------
 
   /// Best-effort in-app notification. Never throws — a failed notification

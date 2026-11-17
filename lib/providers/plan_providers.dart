@@ -26,9 +26,7 @@ class CalendarProvider extends ChangeNotifier {
 
   /// Events on [day], sorted all-day first then by time.
   List<CalendarEvent> onDay(List<CalendarEvent> events, DateTime day) {
-    final list = events
-        .where((e) => e.coversDay(day))
-        .toList();
+    final list = events.where((e) => e.coversDay(day)).toList();
     list.sort(
       (a, b) =>
           (a.minutesFromMidnight ?? -1).compareTo(b.minutesFromMidnight ?? -1),

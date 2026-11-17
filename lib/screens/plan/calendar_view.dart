@@ -422,8 +422,9 @@ class _EventTile extends StatelessWidget {
   }
 }
 
-TimeOfDay? _timeOf(int? minutes) =>
-    minutes == null ? null : TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60);
+TimeOfDay? _timeOf(int? minutes) => minutes == null
+    ? null
+    : TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60);
 
 /// Bottom sheet for adding an event, or editing [existing] (only its owner
 /// can). [shared] picks the starting audience for a new event.
@@ -502,8 +503,7 @@ Future<void> showEventEditor(
                           if (d != null) {
                             setSheet(() {
                               pickedDate = d;
-                              if (pickedEnd != null &&
-                                  pickedEnd!.isBefore(d)) {
+                              if (pickedEnd != null && pickedEnd!.isBefore(d)) {
                                 pickedEnd = null;
                               }
                             });
@@ -595,8 +595,7 @@ Future<void> showEventEditor(
                         ),
                       if (pickedEndTime != null)
                         TextButton(
-                          onPressed: () =>
-                              setSheet(() => pickedEndTime = null),
+                          onPressed: () => setSheet(() => pickedEndTime = null),
                           child: const Text('Clear end time'),
                         ),
                     ],

@@ -10,11 +10,46 @@ import '../../providers/user_provider.dart';
 
 /// Pictures a member can pick for their profile.
 const kAvatarChoices = [
-  '🏡', '👑', '🌻', '🌟', '🌱', '⚽', '🎸', '🎨',
-  '🐶', '🐱', '🦊', '🐼', '🦁', '🐯', '🐸', '🦉',
-  '🦋', '🐢', '🐬', '🦄', '🐝', '🐧', '🐰', '🐨',
-  '🍕', '🍰', '☕', '🍎', '🌈', '🔥', '🌙', '☀️',
-  '🚀', '🎮', '📚', '🎧', '⚓', '🌴', '🏔️', '💎',
+  '🏡',
+  '👑',
+  '🌻',
+  '🌟',
+  '🌱',
+  '⚽',
+  '🎸',
+  '🎨',
+  '🐶',
+  '🐱',
+  '🦊',
+  '🐼',
+  '🦁',
+  '🐯',
+  '🐸',
+  '🦉',
+  '🦋',
+  '🐢',
+  '🐬',
+  '🦄',
+  '🐝',
+  '🐧',
+  '🐰',
+  '🐨',
+  '🍕',
+  '🍰',
+  '☕',
+  '🍎',
+  '🌈',
+  '🔥',
+  '🌙',
+  '☀️',
+  '🚀',
+  '🎮',
+  '📚',
+  '🎧',
+  '⚓',
+  '🌴',
+  '🏔️',
+  '💎',
 ];
 
 class EditProfileScreen extends StatefulWidget {
@@ -87,7 +122,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ? AppColors.gold.withValues(alpha: 0.18)
                             : AppColors.surfaceHigh,
                         border: Border.all(
-                          color: e == _emoji ? AppColors.gold : AppColors.border,
+                          color: e == _emoji
+                              ? AppColors.gold
+                              : AppColors.border,
                           width: e == _emoji ? 2 : 1,
                         ),
                       ),

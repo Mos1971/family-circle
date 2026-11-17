@@ -114,7 +114,10 @@ class AppearanceCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-            Text('Colour scheme', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Colour scheme',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 10),
             Wrap(
               spacing: 10,
@@ -124,8 +127,7 @@ class AppearanceCard extends StatelessWidget {
                   _SchemeChoice(
                     scheme: s,
                     selected: s == theme.scheme,
-                    onTap: () =>
-                        context.read<ThemeModeProvider>().setScheme(s),
+                    onTap: () => context.read<ThemeModeProvider>().setScheme(s),
                   ),
               ],
             ),

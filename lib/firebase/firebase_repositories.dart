@@ -124,6 +124,20 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> deleteAccount({required String password}) async {
+    try {
+      await _b.deleteAccount(password);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_friendlyAuthError(e));
+    } on FirebaseException catch (e) {
+      throw Exception(
+        'We couldn\'t finish deleting your account (${e.code}). '
+        'Please try again, or email us.',
+      );
+    }
+  }
+
+  @override
   Future<void> sendPasswordReset(String email) async {
     try {
       await _b.auth.sendPasswordResetEmail(email: email);

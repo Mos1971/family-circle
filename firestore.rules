@@ -82,7 +82,8 @@ service cloud.firestore {
       allow update: if signedIn() && request.auth.uid == userId
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
              ['email', 'activeCircleId', 'circleIds', 'circleNames']);
-      allow delete: if false;
+      // Deleting your own account (required by app stores).
+      allow delete: if signedIn() && request.auth.uid == userId;
 
       // This person's devices that should receive push alerts. Only they can
       // see or change them (the server function reads them with admin rights).
@@ -146,7 +147,9 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys()
                  .hasOnly(['status', 'role']));
 
-        allow delete: if false;
+        // A person can remove their own profile (leave the circle / delete
+        // their account).
+        allow delete: if signedIn() && request.auth.uid == memberId;
       }
 
       // ---- feed ----------------------------------------------------------
@@ -247,7 +250,8 @@ service cloud.firestore {
           && request.auth.uid in resource.data.participants
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy'])
           && request.resource.data.readBy.hasAll(resource.data.get('readBy', []));
-        allow delete: if false;
+        // Senders can delete their own messages (used when deleting an account).
+        allow delete: if signedIn() && resource.data.senderId == request.auth.uid;
       }
 
       // ---- calendar ------------------------------------------------------

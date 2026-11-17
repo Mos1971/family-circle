@@ -144,11 +144,129 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   onTap: () => context.read<AuthProvider>().logout(),
                 ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: Icon(
+                    Icons.delete_forever_outlined,
+                    color: AppColors.danger,
+                  ),
+                  title: Text(
+                    'Delete my account',
+                    style: TextStyle(color: AppColors.danger),
+                  ),
+                  onTap: () => showDeleteAccountDialog(context),
+                ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Asks for the password, then permanently deletes the account.
+Future<void> showDeleteAccountDialog(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const _DeleteAccountDialog(),
+  );
+}
+
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  final _password = TextEditingController();
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _delete() async {
+    if (_password.text.isEmpty) {
+      setState(() => _error = 'Enter your password to confirm.');
+      return;
+    }
+    final auth = context.read<AuthProvider>();
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final error = await auth.deleteAccount(_password.text);
+    if (!mounted) return;
+    if (error == null) {
+      Navigator.of(context).pop();
+    } else {
+      setState(() {
+        _busy = false;
+        _error = error;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Delete your account?'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'This permanently deletes your account and everything you '
+              'created in every circle you belong to: your posts, comments, '
+              'messages, calendar entries, contacts and lists. This cannot '
+              'be undone.',
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _password,
+              obscureText: true,
+              enabled: !_busy,
+              decoration: const InputDecoration(
+                labelText: 'Your password',
+                prefixIcon: Icon(Icons.lock_outline),
+              ),
+              onSubmitted: (_) => _delete(),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              Text(_error!, style: TextStyle(color: AppColors.danger)),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.danger,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: _busy ? null : _delete,
+          child: _busy
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Delete forever'),
+        ),
+      ],
     );
   }
 }
