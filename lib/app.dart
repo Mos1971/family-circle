@@ -57,6 +57,7 @@ class _Repos {
     required this.messages,
     required this.calendar,
     required this.todos,
+    required this.contacts,
   });
 
   final AuthRepository auth;
