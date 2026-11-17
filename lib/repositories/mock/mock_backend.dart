@@ -22,9 +22,13 @@ import '../../models/user.dart';
 /// A future FirebaseBackend equivalent would replace this with real
 /// Firestore/Auth/FCM calls behind the same repository interfaces.
 class MockBackend {
-  MockBackend() {
+  /// [demoContacts] adds sample address-book entries (demo app and store
+  /// screenshots only; tests start with an empty address book).
+  MockBackend({this.demoContacts = false}) {
     _seed();
   }
+
+  final bool demoContacts;
 
   static const _uuid = Uuid();
 
@@ -375,6 +379,44 @@ class MockBackend {
         minutesFromMidnight: 15 * 60 + 30,
       ),
     ]);
+
+    if (demoContacts) {
+      contacts.addAll([
+        Contact(
+          id: newId(),
+          ownerId: admin.id,
+          name: 'Dr Patel (GP)',
+          phone: '020 7946 0011',
+          address: '12 Mill Lane, Manvers',
+          notes: 'Surgery open 8am to 6pm.',
+          shared: true,
+        ),
+        Contact(
+          id: newId(),
+          ownerId: admin.id,
+          name: 'Grandma Joan',
+          phone: '07700 900123',
+          address: '4 Rose Cottage, Willow Road',
+          shared: true,
+        ),
+        Contact(
+          id: newId(),
+          ownerId: sarah.id,
+          name: 'Plumber - Dave',
+          phone: '07700 900456',
+          notes: 'Fixed the boiler in March.',
+          shared: true,
+        ),
+        Contact(
+          id: newId(),
+          ownerId: sarah.id,
+          name: 'School office',
+          phone: '020 7946 0099',
+          address: 'Oakfield Primary School',
+          shared: true,
+        ),
+      ]);
+    }
 
     todoLists.addAll([
       TodoList(

@@ -120,7 +120,8 @@ class FamilyCircleApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider.value(value: AppMode(isMock: _firebase == null)),
-        if (_firebase == null) Provider(create: (_) => MockBackend()),
+        if (_firebase == null)
+          Provider(create: (_) => MockBackend(demoContacts: true)),
         Provider(create: _buildRepos),
         ChangeNotifierProvider(
           create: (ctx) => AuthProvider(ctx.read<_Repos>().auth),
