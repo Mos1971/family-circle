@@ -737,10 +737,11 @@ class FirebaseBackend {
     var others = 0;
     for (final m in all.docs) {
       if (m.id == me) continue;
+      // Removed, declined and still-pending people don't count: only active
+      // members would be left without an admin.
+      if (m.data()['status'] != 'approved') continue;
       others++;
-      if (m.data()['role'] == 'admin' && m.data()['status'] == 'approved') {
-        otherAdmins++;
-      }
+      if (m.data()['role'] == 'admin') otherAdmins++;
     }
     if (others > 0 && otherAdmins == 0) {
       final name =
